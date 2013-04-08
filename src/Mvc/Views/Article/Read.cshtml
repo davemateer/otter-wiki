@@ -1,0 +1,6 @@
+﻿@model Otter.Mvc.Models.ArticleReadModel
+@{
+    ViewBag.Title = Model.Title;
+}
+<h1>@ViewBag.Title</h1>
+@Html.Raw(Model.Content)

@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mvc", "Mvc\Mvc.csproj", "{2B2A4491-93C4-44E8-B500-BDCC70C0F38D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{69F21156-9C56-4881-81EF-6E03B6925341}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B724A14F-1B64-4A68-9AF1-D25B1EFB815B}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		otter.vsmdi = otter.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = otter.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B2A4491-93C4-44E8-B500-BDCC70C0F38D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B2A4491-93C4-44E8-B500-BDCC70C0F38D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B2A4491-93C4-44E8-B500-BDCC70C0F38D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B2A4491-93C4-44E8-B500-BDCC70C0F38D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69F21156-9C56-4881-81EF-6E03B6925341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69F21156-9C56-4881-81EF-6E03B6925341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69F21156-9C56-4881-81EF-6E03B6925341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69F21156-9C56-4881-81EF-6E03B6925341}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
