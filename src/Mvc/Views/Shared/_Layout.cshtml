@@ -4,16 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
   <title>@ViewBag.Title</title>
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/themes/otter/minified/jquery-ui.min.css")" />
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
   <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-ui-1.10.2.min.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
   @RenderSection("head", false)
 </head>
 <body>
-  <form action="@Url.Action("Search", "Article")" method="get">
-  <div id="search">
-    <input type="text" id="query" name="query" />
-    <input type="submit" value="Search" /></div>
-  </form>
+  <div id="header">
+    @Html.ActionLink("Create new article", "Create", "Article", null, new { id = "add-article-link" })
+    @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
+    {
+      <input type="text" id="query" name="query" />
+      <input type="submit" class="query-submit" value="Search" />
+    }
+  </div>
   @RenderBody()
+  <div id="footer">
+  footer
+  </div>
 </body>
 </html>
