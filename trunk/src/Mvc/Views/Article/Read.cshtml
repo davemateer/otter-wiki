@@ -4,7 +4,8 @@
 }
 <h1>@ViewBag.Title</h1>
 <div class="actions">
-  @Html.ActionLink("Create new article", "Create")
+  @Html.ActionLink("Edit article", "Edit", null, new { @class = "edit-button" })
+  @Html.ActionLink("View history", "History", null, new { @class = "history-button" })
 </div>
 <div class="content">
   @Html.Raw(Model.Content)
