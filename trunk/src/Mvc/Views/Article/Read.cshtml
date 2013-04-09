@@ -1,6 +1,11 @@
 ﻿@model Otter.Mvc.Models.ArticleReadModel
 @{
-    ViewBag.Title = Model.Title;
+  ViewBag.Title = Model.Title;
 }
 <h1>@ViewBag.Title</h1>
-@Html.Raw(Model.Content)
+<div class="actions">
+  @Html.ActionLink("Create new article", "Create")
+</div>
+<div class="content">
+  @Html.Raw(Model.Content)
+</div>

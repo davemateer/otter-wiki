@@ -11,7 +11,7 @@ namespace Otter.Mvc.Repository.Concrete
 {
     public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     {
-        public ApplicationDbContext() : base("ThisApplication")
+        public ApplicationDbContext() : base("Otter")
         {
         }
 

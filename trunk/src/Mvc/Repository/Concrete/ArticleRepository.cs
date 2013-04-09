@@ -38,7 +38,7 @@ using System.Data;
             byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(text);
             byte[] hash = md5.ComputeHash(inputBytes);
 
-            var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ThisApplication"].ConnectionString);
+            var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = connection.CreateCommand();
             cmd.CommandText = "up_Article_Insert";
             cmd.CommandType = CommandType.StoredProcedure;

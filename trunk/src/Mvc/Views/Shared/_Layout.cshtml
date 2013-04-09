@@ -4,12 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
   <title>@ViewBag.Title</title>
-  @Styles.Render("~/Content/css")
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
+  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
   @RenderSection("head", false)
 </head>
 <body>
+  <form action="@Url.Action("Search", "Article")" method="get">
+  <div id="search">
+    <input type="text" id="query" name="query" />
+    <input type="submit" value="Search" /></div>
+  </form>
   @RenderBody()
-  @Scripts.Render("~/bundles/jquery")
-  @RenderSection("scripts", required: false)
 </body>
 </html>
