@@ -9,6 +9,9 @@
         public static void Configure()
         {
             Mapper.CreateMap<Article, ArticleReadModel>();
+            Mapper.CreateMap<Article, ArticleEditModel>();
+
+            Mapper.AssertConfigurationIsValid();
         }
     }
 }

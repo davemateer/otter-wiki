@@ -1,0 +1,28 @@
+﻿@model Otter.Mvc.Models.ArticleEditModel
+@{
+  ViewBag.Title = "Edit " + @Model.Title;
+}
+<h1 class="title">@Model.Title</h1>
+@using (Html.BeginForm())
+{
+  <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
+  <div class="editor-label">Edit the article text using <a href="#">Markdown syntax</a>:</div>
+  <div>@Html.ValidationMessageFor(m => m.Text)</div>
+  <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
+  @Html.HiddenFor(m => m.ArticleId)
+  @Html.HiddenFor(m => m.LastUpdatedBy)
+  @Html.HiddenFor(m => m.LastUpdatedDtm)
+  @Html.HiddenFor(m => m.Revision)
+  @Html.HiddenFor(m => m.UrlTitle)
+  <input type="submit" value="Save changes" />
+}
+@section head
+{
+<style type="text/css">
+  textarea#Text {
+    width: 100%;
+    height: 400px;
+  }
+</style>
+}

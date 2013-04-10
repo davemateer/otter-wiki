@@ -2,7 +2,7 @@
 {
     using System;
 
-    public sealed class ArticleReadModel
+    public sealed class ArticleEditModel
     {
         public int ArticleId { get; set; }
 
@@ -10,7 +10,7 @@
 
         public string UrlTitle { get; set; }
 
-        public string Html { get; set; }
+        public string Text { get; set; }
 
         public int Revision { get; set; }
 

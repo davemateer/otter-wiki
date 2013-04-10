@@ -11,7 +11,7 @@
 
         public string Title { get; set; }
 
-        public string UrlFriendlyTitle { get; set; }
+        public string UrlTitle { get; set; }
 
         public string Text { get; set; }
 

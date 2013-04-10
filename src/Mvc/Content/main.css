@@ -25,7 +25,7 @@ body {
   clear: both;
   border-top: 1px solid #d9d9d9;
 }
-h1 {
+h1.title {
   font-family: Georgia, "Times New Roman", Serif;
   border-width: 1px 0;
   border-style: solid;
@@ -49,7 +49,4 @@ div.actions {
 div.actions a {
   display: block;
   margin-bottom: 1em;
-}
-div.content {
-  border-right: 1px solid #d9d9d9;
 }
