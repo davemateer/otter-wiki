@@ -32,9 +32,6 @@
 
             var model = Mapper.Map<ArticleReadModel>(article);
 
-            var markdown = new MarkdownSharp.Markdown();
-            model.Content = markdown.Transform(model.Text);
-
             // TODO: sanitize
 
             return View(model);
@@ -48,6 +45,7 @@
         }
 
         [HttpPost]
+        [ValidateInput(false)]
         public ActionResult Create(ArticleCreateModel model)
         {
             if (!this.ModelState.IsValid)

@@ -41,6 +41,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\third_party\EntityFramework.dll</HintPath>
     </Reference>
+    <Reference Include="HtmlAgilityPack, Version=1.4.6.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\third_party\HtmlAgilityPack.dll</HintPath>
+    </Reference>
     <Reference Include="MarkdownSharp">
       <HintPath>..\..\third_party\MarkdownSharp.dll</HintPath>
     </Reference>
@@ -90,6 +94,8 @@
     </Compile>
     <Compile Include="Infrastructure\AutomapperConfiguration.cs" />
     <Compile Include="Infrastructure\FilterConfig.cs" />
+    <Compile Include="Infrastructure\ITextToHtmlConverter.cs" />
+    <Compile Include="Infrastructure\MarkdownConverter.cs" />
     <Compile Include="Infrastructure\NinjectDependencyResolver.cs" />
     <Compile Include="Infrastructure\NinjectWebCommon.cs" />
     <Compile Include="Infrastructure\RouteConfig.cs" />
