@@ -2,10 +2,10 @@
 @{
   ViewBag.Title = Model.Title;
 }
-<h1>@ViewBag.Title</h1>
+<h1 class="title">@ViewBag.Title</h1>
 <div class="actions">
-  @Html.ActionLink("Edit article", "Edit", null, new { @class = "edit-button" })
-  @Html.ActionLink("View history", "History", null, new { @class = "history-button" })
+  @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle }, new { @class = "edit-button" })
+  @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "history-button" })
 </div>
 <div class="content">
   @Html.Raw(Model.Html)

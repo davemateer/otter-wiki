@@ -24,7 +24,7 @@
         [HttpGet]
         public ActionResult Read(string id)
         {
-            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlFriendlyTitle == id);
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
                 return HttpNotFound();
@@ -55,6 +55,34 @@
 
             string title = this.articleRepository.InsertArticle(model.Title, model.Text);
             return RedirectToAction("Read", new { id = title });
+        }
+
+        [HttpGet]
+        public ActionResult Edit(string id)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return HttpNotFound();
+            }
+
+            var model = Mapper.Map<ArticleEditModel>(article);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public ActionResult Edit(ArticleEditModel model)
+        {
+            if (!this.ModelState.IsValid)
+            {
+                return this.View(model);
+            }
+
+            // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
+
+            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text);
+            return RedirectToAction("Read", new { id = model.UrlTitle });
         }
     }
 }

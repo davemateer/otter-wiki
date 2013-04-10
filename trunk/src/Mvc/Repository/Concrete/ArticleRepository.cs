@@ -1,17 +1,15 @@
 ﻿namespace Otter.Mvc.Repository
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Web;
-    using Otter.Mvc.Infrastructure;
-    using System.Security.Cryptography;
-    using System.Data.SqlClient;
-using System.Data;
     using System.Configuration;
-    using Otter.Mvc.Repository.Abstract;
-    using Otter.Mvc.Domain;
+    using System.Data;
+    using System.Data.SqlClient;
+    using System.Linq;
+    using System.Security.Cryptography;
     using Otter.Infrastructure;
+    using Otter.Mvc.Domain;
+    using Otter.Mvc.Infrastructure;
+    using Otter.Mvc.Repository.Abstract;
+    using System.Collections.Generic;
 
     public sealed class ArticleRepository : IArticleRepository
     {
@@ -31,11 +29,13 @@ using System.Data;
 
         public string InsertArticle(string title, string text)
         {
-            string urlFriendlyTitle = Sluggifier.GenerateSlug(title);
-            if (urlFriendlyTitle.Length > 100)
+            string urlTitle = Sluggifier.GenerateSlug(title);
+            if (urlTitle.Length > 100)
             {
-                urlFriendlyTitle = urlFriendlyTitle.Substring(0, 100);
+                urlTitle = urlTitle.Substring(0, 100);
             }
+
+            // TODO: Ensure url title is unique
 
             MD5 md5 = MD5.Create();
             byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(text);
@@ -52,8 +52,8 @@ using System.Data;
             parameters[0] = new SqlParameter("@Title", SqlDbType.NVarChar, 100);
             parameters[0].Value = title;
 
-            parameters[1] = new SqlParameter("@UrlFriendlyTitle", SqlDbType.NVarChar, 100);
-            parameters[1].Value = urlFriendlyTitle;
+            parameters[1] = new SqlParameter("@UrlTitle", SqlDbType.NVarChar, 100);
+            parameters[1].Value = urlTitle;
 
             parameters[2] = new SqlParameter("@Text", SqlDbType.NVarChar, -1);
             parameters[2].Value = text;
@@ -80,7 +80,18 @@ using System.Data;
                 connection.Close();
             }
 
-            return urlFriendlyTitle;
+            return urlTitle;
+        }
+
+        public void UpdateArticle(int articleId, string title, string urlTitle, string text)
+        {
+            // Create diff from current revision. Insert history record.
+            string currentText = this.context.Articles.Where(a => a.ArticleId == articleId).Select(a => a.Text).Single();
+
+            // Update existing record.
+            var diff = new DiffMatchPatch.diff_match_patch();
+            List<DiffMatchPatch.Patch> patches = diff.patch_make(text, currentText);
+            string delta = diff.patch_toText(patches);
         }
     }
 }

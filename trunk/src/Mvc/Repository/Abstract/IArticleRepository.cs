@@ -11,5 +11,7 @@ using Otter.Mvc.Domain;
         IQueryable<Article> Articles { get; }
 
         string InsertArticle(string title, string text);
+
+        void UpdateArticle(int articleId, string title, string urlTitle, string text);
     }
 }
