@@ -35,6 +35,7 @@
         {
             this.ninjectKernel.Bind<IApplicationDbContext>().To<ApplicationDbContext>().InRequestScope();
             this.ninjectKernel.Bind<IArticleRepository>().To<ArticleRepository>().InRequestScope();
+            this.ninjectKernel.Bind<ITextToHtmlConverter>().To<MarkdownConverter>().InRequestScope();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Otter.Mvc.Models
 
         public string UrlFriendlyTitle { get; set; }
 
-        public string Text { get; set; }
+        public string Html { get; set; }
 
         public byte[] TextHash { get; set; }
 
@@ -22,7 +22,5 @@ namespace Otter.Mvc.Models
         public DateTime LastUpdatedDtm { get; set; }
 
         public string LastUpdatedBy { get; set; }
-
-        public string Content { get; set; }
     }
 }

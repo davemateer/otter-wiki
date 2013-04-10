@@ -17,6 +17,8 @@
 
         public byte[] TextHash { get; set; }
 
+        public string Html { get; set; }
+
         public int Revision { get; set; }
 
         public DateTime LastUpdatedDtm { get; set; }
