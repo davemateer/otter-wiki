@@ -50,3 +50,8 @@ div.actions a {
   display: block;
   margin-bottom: 1em;
 }
+.authorship {
+  font-style: italic;
+  font-size: 85%;
+  color: #333;
+}

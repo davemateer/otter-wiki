@@ -1,8 +1,11 @@
-﻿namespace Otter.Mvc.Models
+﻿namespace Otter.Mvc.Domain
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Web;
 
-    public sealed class ArticleEditModel
+    public abstract class ArticleBase
     {
         public int ArticleId { get; set; }
 

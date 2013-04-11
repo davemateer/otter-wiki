@@ -10,3 +10,4 @@
 <div class="content">
   @Html.Raw(Model.Html)
 </div>
+<p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : "by " + Model.UpdatedBy)</p>

@@ -10,5 +10,7 @@ namespace Otter.Mvc.Repository.Abstract
     public interface IApplicationDbContext
     {
         DbSet<Article> Articles { get; }
+
+        DbSet<ArticleHistory> ArticleHistory { get; }
     }
 }

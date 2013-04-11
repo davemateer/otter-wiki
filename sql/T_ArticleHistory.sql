@@ -1,11 +1,12 @@
 CREATE TABLE [dbo].[ArticleHistory](
 	[ArticleId] [int] NOT NULL,
 	[Revision] [int] NOT NULL,
+	[Title] [nvarchar](100) NOT NULL,
 	[UpdatedDtm] [datetime] NOT NULL,
 	[UpdatedBy] [nvarchar](50) NOT NULL,
-	[Title] [nvarchar](100) NOT NULL,
+	[Comment] [nvarchar](100) NOT NULL,
 	[Delta] [nvarchar](max) NOT NULL,
-	[SnapshotText] [nvarchar](max) NULL,
+	[Text] [nvarchar](max) NULL,
  CONSTRAINT [PK_ArticleHistory] PRIMARY KEY CLUSTERED 
 (
 	[ArticleId] ASC,

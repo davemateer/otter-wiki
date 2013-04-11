@@ -1,13 +1,13 @@
 CREATE TABLE [dbo].[Article](
 	[ArticleId] [int] IDENTITY(1,1) NOT NULL,
+	[Revision] [int] NOT NULL,
 	[Title] [nvarchar](100) NOT NULL,
 	[UrlTitle] [nvarchar](100) NOT NULL,
+	[UpdatedDtm] [datetime] NOT NULL,
+	[UpdatedBy] [nvarchar](50) NOT NULL,
+	[Comment] [nvarchar](50) NOT NULL,
 	[Text] [nvarchar](max) NOT NULL,
 	[Html] [nvarchar](max) NOT NULL,
-	[TextHash] [binary](16) NOT NULL,
-	[Revision] [int] NOT NULL,
-	[LastUpdatedDtm] [datetime] NOT NULL,
-	[LastUpdatedBy] [nvarchar](50) NOT NULL,
  CONSTRAINT [PK_Article] PRIMARY KEY NONCLUSTERED 
 (
 	[ArticleId] ASC
