@@ -14,8 +14,8 @@
 
         public int Revision { get; set; }
 
-        public DateTime LastUpdatedDtm { get; set; }
+        public DateTime UpdatedDtm { get; set; }
 
-        public string LastUpdatedBy { get; set; }
+        public string UpdatedBy { get; set; }
     }
 }

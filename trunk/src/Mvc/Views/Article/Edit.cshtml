@@ -7,12 +7,14 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
+  <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
   <div class="editor-label">Edit the article text using <a href="#">Markdown syntax</a>:</div>
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
   @Html.HiddenFor(m => m.ArticleId)
-  @Html.HiddenFor(m => m.LastUpdatedBy)
-  @Html.HiddenFor(m => m.LastUpdatedDtm)
+  @Html.HiddenFor(m => m.UpdatedBy)
+  @Html.HiddenFor(m => m.UpdatedDtm)
   @Html.HiddenFor(m => m.Revision)
   @Html.HiddenFor(m => m.UrlTitle)
   <input type="submit" value="Save changes" />

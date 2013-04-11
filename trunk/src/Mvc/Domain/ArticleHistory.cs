@@ -5,8 +5,8 @@
     using System.Linq;
     using System.Web;
 
-    public sealed class Article : ArticleBase
+    public sealed class ArticleHistory : ArticleBase
     {
-        public string Html { get; set; }
+        public string Delta { get; set; }
     }
 }

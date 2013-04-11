@@ -10,8 +10,10 @@ using Otter.Mvc.Domain;
     {
         IQueryable<Article> Articles { get; }
 
-        string InsertArticle(string title, string text);
+        IQueryable<ArticleHistory> ArticleHistory { get; }
 
-        void UpdateArticle(int articleId, string title, string urlTitle, string text);
+        string InsertArticle(string title, string text, string userId);
+
+        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId);
     }
 }

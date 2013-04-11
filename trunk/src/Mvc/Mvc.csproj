@@ -37,6 +37,9 @@
     <Reference Include="AutoMapper">
       <HintPath>..\..\third_party\AutoMapper.dll</HintPath>
     </Reference>
+    <Reference Include="DiffMatchPatch">
+      <HintPath>..\..\third_party\DiffMatchPatch.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=4.4.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\third_party\EntityFramework.dll</HintPath>
@@ -89,11 +92,12 @@
   <ItemGroup>
     <Compile Include="Controllers\ArticleController.cs" />
     <Compile Include="Domain\Article.cs" />
+    <Compile Include="Domain\ArticleBase.cs" />
+    <Compile Include="Domain\ArticleHistory.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Infrastructure\AutomapperConfiguration.cs" />
-    <Compile Include="Infrastructure\DiffMatchPatch.cs" />
     <Compile Include="Infrastructure\FilterConfig.cs" />
     <Compile Include="Infrastructure\ITextToHtmlConverter.cs" />
     <Compile Include="Infrastructure\MarkdownConverter.cs" />

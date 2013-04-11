@@ -31,9 +31,6 @@
             }
 
             var model = Mapper.Map<ArticleReadModel>(article);
-
-            // TODO: sanitize
-
             return View(model);
         }
 
@@ -53,7 +50,7 @@
                 return this.View(model);
             }
 
-            string title = this.articleRepository.InsertArticle(model.Title, model.Text);
+            string title = this.articleRepository.InsertArticle(model.Title, model.Text, this.User.Identity.Name);
             return RedirectToAction("Read", new { id = title });
         }
 
@@ -81,8 +78,27 @@
 
             // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
 
-            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text);
+            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, this.User.Identity.Name);
             return RedirectToAction("Read", new { id = model.UrlTitle });
+        }
+
+        [HttpGet]
+        public ActionResult History(string id)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return HttpNotFound();
+            }
+
+            var history = from a in this.articleRepository.Articles
+                          join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
+                          where a.UrlTitle == id
+                          orderby h.Revision descending
+                          select new { h.Revision, h.UpdatedBy, h.UpdatedDtm };
+            
+            var model = Mapper.Map<ArticleEditModel>(article);
+            return View(model);
         }
     }
 }
