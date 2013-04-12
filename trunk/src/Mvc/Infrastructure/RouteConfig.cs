@@ -11,8 +11,8 @@
 
             routes.MapRoute(
                 name: "ReadArticle",
-                url: "kb/{id}",
-                defaults: new { controller = "Article", action = "Read" }
+                url: "kb/{id}/{revision}",
+                defaults: new { controller = "Article", action = "Read", revision = UrlParameter.Optional }
             );
 
             routes.MapRoute(

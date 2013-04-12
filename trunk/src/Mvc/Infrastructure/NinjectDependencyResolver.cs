@@ -6,10 +6,10 @@
     using System.Web;
     using System.Web.Mvc;
     using Ninject;
-    using Otter.Mvc.Repository;
+    using Otter.Repository;
     using Ninject.Web.Common;
-    using Otter.Mvc.Repository.Abstract;
-    using Otter.Mvc.Repository.Concrete;
+    using Otter.Repository.Abstract;
+    using Otter.Repository.Concrete;
 
     public sealed class NinjectDependencyResolver : IDependencyResolver
     {

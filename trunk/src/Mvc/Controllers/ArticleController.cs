@@ -1,18 +1,21 @@
-﻿namespace Otter.Mvc.Controllers
+﻿namespace Otter.Controllers
 {
     using System.Linq;
     using System.Web.Mvc;
     using AutoMapper;
-    using Otter.Mvc.Models;
-    using Otter.Mvc.Repository;
+    using Otter.Models;
+    using Otter.Repository;
+using Otter.Infrastructure;
 
     public class ArticleController : Controller
     {
         private readonly IArticleRepository articleRepository;
+        private readonly ITextToHtmlConverter htmlConverter;
 
-        public ArticleController(IArticleRepository articleRepository)
+        public ArticleController(IArticleRepository articleRepository, ITextToHtmlConverter htmlConverter)
         {
             this.articleRepository = articleRepository;
+            this.htmlConverter = htmlConverter;
         }
 
         [HttpGet]
@@ -22,7 +25,7 @@
         }
 
         [HttpGet]
-        public ActionResult Read(string id)
+        public ActionResult Read(string id, int? revision)
         {
             var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
@@ -30,7 +33,25 @@
                 return HttpNotFound();
             }
 
-            var model = Mapper.Map<ArticleReadModel>(article);
+            ArticleReadModel model = null;
+
+            if (revision.HasValue && revision.Value != article.Revision)
+            {
+                var articleRevision = this.articleRepository.ArticleHistory.FirstOrDefault(h => h.ArticleId == article.ArticleId && h.Revision == revision.Value);
+                if (articleRevision == null)
+                {
+                    return HttpNotFound();
+                }
+
+                model = Mapper.Map<ArticleReadModel>(articleRevision);
+                model.Html = articleRevision.Text == null ? this.htmlConverter.Convert(articleRevision.Text) : this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision);
+                model.UrlTitle = article.UrlTitle;
+            }
+            else
+            {
+                model = Mapper.Map<ArticleReadModel>(article);
+            }
+
             return View(model);
         }
 
@@ -91,13 +112,19 @@
                 return HttpNotFound();
             }
 
-            var history = from a in this.articleRepository.Articles
-                          join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
-                          where a.UrlTitle == id
-                          orderby h.Revision descending
-                          select new { h.Revision, h.UpdatedBy, h.UpdatedDtm };
-            
-            var model = Mapper.Map<ArticleEditModel>(article);
+            var model = Mapper.Map<ArticleHistoryModel>(article);
+            model.HistoryRecords = from a in this.articleRepository.Articles
+                                   join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
+                                   where a.UrlTitle == id
+                                   orderby h.Revision descending
+                                   select new ArticleHistoryRecord()
+                                   { 
+                                       Revision = h.Revision, 
+                                       UpdatedBy = h.UpdatedBy, 
+                                       UpdatedDtm = h.UpdatedDtm, 
+                                       Comment = h.Comment
+                                   };
+
             return View(model);
         }
     }

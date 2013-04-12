@@ -4,7 +4,6 @@
     using System.Web.Routing;
     using Ninject;
     using Otter.Infrastructure;
-    using Otter.Mvc.Infrastructure;
 
     public class MvcApplication : System.Web.HttpApplication
     {

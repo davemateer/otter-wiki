@@ -1,4 +1,4 @@
-﻿namespace Otter.Mvc.Models
+﻿namespace Otter.Models
 {
     using System;
     using System.Collections.Generic;

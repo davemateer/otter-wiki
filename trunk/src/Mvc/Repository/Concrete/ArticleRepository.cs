@@ -1,16 +1,14 @@
-﻿namespace Otter.Mvc.Repository
+﻿namespace Otter.Repository
 {
     using System.Collections.Generic;
     using System.Configuration;
     using System.Data;
     using System.Data.SqlClient;
     using System.Linq;
-    using System.Security.Cryptography;
     using DiffMatchPatch;
+    using Otter.Domain;
     using Otter.Infrastructure;
-    using Otter.Mvc.Domain;
-    using Otter.Mvc.Infrastructure;
-    using Otter.Mvc.Repository.Abstract;
+    using Otter.Repository.Abstract;
 
     public sealed class ArticleRepository : IArticleRepository
     {
@@ -137,6 +135,11 @@
             {
                 connection.Close();
             }
+        }
+
+        public string GetRevisionHtml(int articleId, int revision)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

@@ -1,0 +1,43 @@
+﻿@model Otter.Models.ArticleHistoryModel
+@{
+  ViewBag.Title = "History of " + Model.Title;
+  int penultimateRevision = Model.HistoryRecords.Any() ? Model.HistoryRecords.Max(r => r.Revision) : 0;
+}
+<h1 class="title">@Model.Title</h1>
+<h2>History</h2>
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>Updated by</th>
+      <th>Updated when</th>
+      <th>Comment</th>
+      <th>View</th>
+      <th>Compare A</th>
+      <th>Compare B</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>@Model.Revision (current)</td>
+      <td>@Model.UpdatedBy</td>
+      <td>@Model.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
+      <td>@Model.Comment</td>
+      <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
+      <td><input type="radio" name="CompareA" value="@Model.Revision"@{ if (!Model.HistoryRecords.Any()) { <text>disabled="disabled"</text> } } /></td>
+      <td><input type="radio" name="CompareB" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any()) { <text>disabled="disabled"</text> } }/></td>
+    </tr>
+    @foreach (var record in Model.HistoryRecords)
+    {
+      <tr>
+      <td>@record.Revision</td>
+      <td>@record.UpdatedBy</td>
+      <td>@record.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
+      <td>@record.Comment</td>
+      <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
+      <td><input type="radio" name="CompareA" value="@record.Revision"@{ if (record.Revision == penultimateRevision) { <text>checked="checked"</text> } } /></td>
+      <td><input type="radio" name="CompareB" value="@record.Revision" /></td>
+    </tr>
+    }
+  </tbody>
+</table>

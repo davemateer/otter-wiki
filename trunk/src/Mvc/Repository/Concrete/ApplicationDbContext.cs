@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Data.Entity;
-using Otter.Mvc.Domain;
-using Otter.Mvc.Repository.Abstract;
+using Otter.Domain;
+using Otter.Repository.Abstract;
 using System.Data.Entity.ModelConfiguration.Conventions;
 
-namespace Otter.Mvc.Repository.Concrete
+namespace Otter.Repository.Concrete
 {
     public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     {

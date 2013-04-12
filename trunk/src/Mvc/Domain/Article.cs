@@ -1,4 +1,4 @@
-﻿namespace Otter.Mvc.Domain
+﻿namespace Otter.Domain
 {
     using System;
     using System.Collections.Generic;
