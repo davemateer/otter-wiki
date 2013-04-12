@@ -1,4 +1,4 @@
-﻿namespace Otter.Mvc.Infrastructure
+﻿namespace Otter.Infrastructure
 {
     using System.Diagnostics;
     using System.Globalization;
@@ -47,7 +47,7 @@
                 }
             }
 
-            return slug.ToString().ToLowerInvariant();
+            return slug.ToString().ToLowerInvariant().Trim('-');
         }
     }
 }

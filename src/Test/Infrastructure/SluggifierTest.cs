@@ -1,7 +1,7 @@
 ﻿namespace Test
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Otter.Mvc.Infrastructure;
+    using Otter.Infrastructure;
 
     [TestClass]
     public class SluggifierTest
@@ -60,6 +60,13 @@
         {
             string slug = Sluggifier.GenerateSlug("this-is_a-test/title--with (weird) stuff");
             Assert.AreEqual("this-is-a-test-title-with-weird-stuff", slug);
+        }
+        
+        [TestMethod]
+        public void GenerateSlug_FinalDash()
+        {
+            string slug = Sluggifier.GenerateSlug("test (test)");
+            Assert.AreEqual("test-test", slug);
         }
     }
 }

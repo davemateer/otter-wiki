@@ -1,10 +1,10 @@
-﻿namespace Otter.Mvc.Repository
+﻿namespace Otter.Repository
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-using Otter.Mvc.Domain;
+using Otter.Domain;
 
     public interface IArticleRepository
     {
@@ -15,5 +15,7 @@ using Otter.Mvc.Domain;
         string InsertArticle(string title, string text, string userId);
 
         void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId);
+
+        string GetRevisionHtml(int articleId, int revision);
     }
 }

@@ -23,6 +23,7 @@ body {
 }
 #footer {
   clear: both;
+  margin-top: 1em;
   border-top: 1px solid #d9d9d9;
 }
 h1.title {
@@ -54,4 +55,12 @@ div.actions a {
   font-style: italic;
   font-size: 85%;
   color: #333;
+}
+table.grid {
+  border: 1px solid #ddd;
+  border-collapse: collapse;
+}
+table.grid td, table.grid th {
+  border: 1px solid #ddd;
+  padding: 3px 6px;
 }

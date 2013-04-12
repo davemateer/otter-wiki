@@ -1,8 +1,8 @@
-﻿namespace Otter.Mvc.Infrastructure
+﻿namespace Otter.Infrastructure
 {
     using AutoMapper;
-    using Otter.Mvc.Domain;
-    using Otter.Mvc.Models;
+    using Otter.Domain;
+    using Otter.Models;
 
     public static class AutomapperConfiguration
     {
@@ -10,6 +10,7 @@
         {
             Mapper.CreateMap<Article, ArticleReadModel>();
             Mapper.CreateMap<Article, ArticleEditModel>();
+            Mapper.CreateMap<Article, ArticleHistoryModel>();
 
             Mapper.AssertConfigurationIsValid();
         }
