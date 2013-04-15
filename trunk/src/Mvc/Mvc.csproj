@@ -110,6 +110,8 @@
     <Compile Include="Models\Article\ArticleReadModel.cs" />
     <Compile Include="Models\Article\ArticleEditModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryModel.cs" />
+    <Compile Include="Models\Article\ArticleCompareModel.cs" />
+    <Compile Include="Models\Article\ArticleCompareRecord.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\Abstract\IApplicationDbContext.cs" />
     <Compile Include="Repository\Abstract\IArticleRepository.cs" />
