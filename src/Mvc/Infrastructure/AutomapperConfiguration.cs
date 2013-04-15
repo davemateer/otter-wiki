@@ -12,6 +12,10 @@
             Mapper.CreateMap<Article, ArticleEditModel>();
             Mapper.CreateMap<Article, ArticleHistoryModel>();
 
+            Mapper.CreateMap<ArticleHistory, ArticleReadModel>()
+                .ForMember(m => m.UrlTitle, opt => opt.Ignore())
+                .ForMember(m => m.Html, opt => opt.Ignore());
+
             Mapper.AssertConfigurationIsValid();
         }
     }

@@ -6,6 +6,8 @@
     using Otter.Models;
     using Otter.Repository;
 using Otter.Infrastructure;
+    using System.Diagnostics;
+    using System;
 
     public class ArticleController : Controller
     {
@@ -44,7 +46,7 @@ using Otter.Infrastructure;
                 }
 
                 model = Mapper.Map<ArticleReadModel>(articleRevision);
-                model.Html = articleRevision.Text == null ? this.htmlConverter.Convert(articleRevision.Text) : this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision);
+                model.Html = articleRevision.Text == null ? this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision) : this.htmlConverter.Convert(articleRevision.Text);
                 model.UrlTitle = article.UrlTitle;
             }
             else
@@ -126,6 +128,30 @@ using Otter.Infrastructure;
                                    };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Compare(string id, int compareFrom, int compareTo)
+        {
+            Debug.Assert(compareFrom < compareTo, "compareFrom < compareTo");
+            if (compareFrom >= compareTo)
+            {
+                throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
+            }
+
+            var article = this.articleRepository.Articles.Where(a => a.UrlTitle == id).Select(a => new { a.ArticleId, a.Revision }).FirstOrDefault();
+            if (article == null)
+            {
+                return HttpNotFound();
+            }
+
+            string textFrom = null;
+            string textTo = null;
+
+            if (compareTo == article.Revision)
+            {
+                textTo
+            }
         }
     }
 }

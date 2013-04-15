@@ -1,14 +1,10 @@
-﻿namespace Otter.Domain
+﻿namespace Otter.Models
 {
     using System;
 
-    public abstract class ArticleBase
+    public sealed class ArticleCompareRecord
     {
-        public int ArticleId { get; set; }
-
         public string Title { get; set; }
-
-        public string Text { get; set; }
 
         public int Revision { get; set; }
 

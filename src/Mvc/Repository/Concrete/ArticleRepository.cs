@@ -139,7 +139,55 @@
 
         public string GetRevisionHtml(int articleId, int revision)
         {
-            throw new System.NotImplementedException();
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_SelectRevisionTextDeltaSequence";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[2];
+
+            parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+            parameters[0].Value = articleId;
+
+            parameters[1] = new SqlParameter("@Revision", SqlDbType.Int);
+            parameters[1].Value = revision;
+
+            cmd.Parameters.AddRange(parameters);
+
+            string text = string.Empty;
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int revisionOrdinal = reader.GetOrdinal("Revision");
+                    int textOrdinal = reader.GetOrdinal("Text");
+
+                    if (reader.Read())
+                    {
+                        // The first record is the base text.
+                        text = reader.GetString(textOrdinal);
+
+                        // Subsequent records are deltas to apply to the base text.
+                        var patchUtil = new diff_match_patch();
+                        while (reader.Read())
+                        {
+                            List<Patch> patches = patchUtil.patch_fromText(reader.GetString(textOrdinal));
+                            object[] results = patchUtil.patch_apply(patches, text);
+                            text = (string)results[0];
+                        }
+                    }
+                    
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return this.converter.Convert(text);
         }
     }
 }
