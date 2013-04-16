@@ -9,6 +9,7 @@
     using Otter.Domain;
     using Otter.Infrastructure;
     using Otter.Repository.Abstract;
+    using System.Transactions;
 
     public sealed class ArticleRepository : IArticleRepository
     {
@@ -31,7 +32,12 @@
             get { return this.context.ArticleHistory; }
         }
 
-        public string InsertArticle(string title, string text, string userId)
+        public IQueryable<ArticleTag> ArticleTags
+        {
+            get { return this.context.ArticleTags; }
+        }
+ 
+        public string InsertArticle(string title, string text, IEnumerable<string> tags, string userId)
         {
             string urlTitle = Sluggifier.GenerateSlug(title);
             if (urlTitle.Length > 100)
@@ -45,33 +51,61 @@
 
             var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = connection.CreateCommand();
-            cmd.CommandText = "up_Article_Insert";
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter[] parameters = new SqlParameter[5];
-
-            parameters[0] = new SqlParameter("@Title", SqlDbType.NVarChar, 100);
-            parameters[0].Value = title;
-
-            parameters[1] = new SqlParameter("@UrlTitle", SqlDbType.NVarChar, 100);
-            parameters[1].Value = urlTitle;
-
-            parameters[2] = new SqlParameter("@Text", SqlDbType.NVarChar, -1);
-            parameters[2].Value = text;
-
-            parameters[3] = new SqlParameter("@Html", SqlDbType.NVarChar, -1);
-            parameters[3].Value = html;
-
-            parameters[4] = new SqlParameter("@UpdatedBy", SqlDbType.NVarChar, 50);
-            parameters[4].Value = userId;
-
-            cmd.Parameters.AddRange(parameters);
-
+            
             connection.Open();
 
             try
             {
-                cmd.ExecuteNonQuery();
+                using (var scope = new TransactionScope())
+                {
+                    cmd.CommandText = "up_Article_Insert";
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter[] parameters = new SqlParameter[6];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Direction = ParameterDirection.Output;
+
+                    parameters[1] = new SqlParameter("@Title", SqlDbType.NVarChar, 100);
+                    parameters[1].Value = title;
+
+                    parameters[2] = new SqlParameter("@UrlTitle", SqlDbType.NVarChar, 100);
+                    parameters[2].Value = urlTitle;
+
+                    parameters[3] = new SqlParameter("@Text", SqlDbType.NVarChar, -1);
+                    parameters[3].Value = text;
+
+                    parameters[4] = new SqlParameter("@Html", SqlDbType.NVarChar, -1);
+                    parameters[4].Value = html;
+
+                    parameters[5] = new SqlParameter("@UpdatedBy", SqlDbType.NVarChar, 50);
+                    parameters[5].Value = userId;
+
+                    cmd.Parameters.AddRange(parameters);
+
+                    cmd.ExecuteNonQuery();
+
+                    int articleId = (int)parameters[0].Value;
+
+                    cmd.CommandText = "up_ArticleTag_Insert";
+                    cmd.Parameters.Clear();
+
+                    parameters = new SqlParameter[2];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Tag", SqlDbType.NVarChar, 50);
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var tag in tags)
+                    {
+                        parameters[1].Value = tag;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    scope.Complete();
+                }
             }
             finally
             {
@@ -189,5 +223,5 @@
 
             return this.converter.Convert(text);
         }
-    }
+   }
 }

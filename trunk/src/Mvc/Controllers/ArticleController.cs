@@ -8,6 +8,8 @@
 using Otter.Infrastructure;
     using System.Diagnostics;
     using System;
+    using System.Collections.Generic;
+    using System.Text.RegularExpressions;
 
     public class ArticleController : Controller
     {
@@ -73,8 +75,34 @@ using Otter.Infrastructure;
                 return this.View(model);
             }
 
-            string title = this.articleRepository.InsertArticle(model.Title, model.Text, this.User.Identity.Name);
+            List<string> tags = SplitTags(model.Tags);
+
+            string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, this.User.Identity.Name);
             return RedirectToAction("Read", new { id = title });
+        }
+
+        private static List<string> SplitTags(string input)
+        {
+            var tags = new List<string>();
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return tags;
+            }
+
+            char[] separators = { ',', ';' };
+            string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var tag in values)
+            {
+                string canonical = tag.Trim();  // Could do more: lowercase, remove accents, replace spaces with dashes, etc.
+                if (!tags.Contains(canonical))
+                {
+                    tags.Add(canonical);
+                }
+            }
+
+            return tags;
         }
 
         [HttpGet]
@@ -148,10 +176,14 @@ using Otter.Infrastructure;
             string textFrom = null;
             string textTo = null;
 
-            if (compareTo == article.Revision)
-            {
-                textTo
-            }
+            return HttpNotFound();
+        }
+
+        [HttpGet]
+        public ActionResult GetUniqueTags()
+        {
+            var tags = this.articleRepository.ArticleTags.Select(t => t.Tag).Distinct().OrderBy(t => t);
+            return Json(tags.Select(t => new { label = t, value = t }), JsonRequestBehavior.AllowGet);
         }
     }
 }

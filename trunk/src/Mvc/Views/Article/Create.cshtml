@@ -7,17 +7,73 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">Enter the article text using <a href="#">Markdown syntax</a>:</div>
+  <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
+  <div class="editor-label">
+    Enter the article text using <a href="#">Markdown syntax</a>:</div>
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
   <input type="submit" />
 }
 @section head
 {
-<style type="text/css">
-  textarea#Text {
-    width: 100%;
-    height: 400px;
-  }
-</style>
+  <script type="text/javascript">
+    $(document).ready(function () {
+
+      var split = function (val) {
+        return val.split(/,\s*/);
+      }
+
+      var extractLast = function (term) {
+        return split(term).pop();
+      }
+
+      $("#Tags")
+      // don't navigate away from the field on tab when selecting an item
+      .bind("keydown", function (event) {
+        if (event.keyCode === $.ui.keyCode.TAB &&
+            $(this).data("ui-autocomplete").menu.active) {
+          event.preventDefault();
+        }
+      })
+      .autocomplete({
+        source: function (request, response) {
+          $.getJSON('@Url.Action("GetUniqueTags")', {
+            term: extractLast(request.term)
+          }, response);
+        },
+        search: function () {
+          // custom minLength
+          var term = extractLast(this.value);
+          if (term.length < 2) {
+            return false;
+          }
+        },
+        focus: function () {
+          // prevent value inserted on focus
+          return false;
+        },
+        select: function (event, ui) {
+          var terms = split(this.value);
+          // remove the current input
+          terms.pop();
+          // add the selected item
+          terms.push(ui.item.value);
+          // add placeholder to get the comma-and-space at the end
+          terms.push("");
+          this.value = terms.join(", ");
+          return false;
+        }
+      });
+    });
+  </script>
+  <style type="text/css">
+    textarea#Text {
+      width: 100%;
+      height: 400px;
+    }
+    #Title, #Tags {
+      width: 450px;
+    }
+  </style>
 }

@@ -12,7 +12,9 @@ using Otter.Domain;
 
         IQueryable<ArticleHistory> ArticleHistory { get; }
 
-        string InsertArticle(string title, string text, string userId);
+        IQueryable<ArticleTag> ArticleTags { get; }
+
+        string InsertArticle(string title, string text, IEnumerable<string> tags, string userId);
 
         void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId);
 
