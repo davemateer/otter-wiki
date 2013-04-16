@@ -12,5 +12,7 @@ namespace Otter.Repository.Abstract
         DbSet<Article> Articles { get; }
 
         DbSet<ArticleHistory> ArticleHistory { get; }
+
+        DbSet<ArticleTag> ArticleTags { get; }
     }
 }

@@ -25,9 +25,15 @@ namespace Otter.Repository.Concrete
             get { return this.Set<ArticleHistory>(); }
         }
 
+        public DbSet<ArticleTag> ArticleTags
+        {
+            get { return this.Set<ArticleTag>(); }
+        }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ArticleHistory>().HasKey(h => new { h.ArticleId, h.Revision });
+            modelBuilder.Entity<ArticleTag>().HasKey(t => new { t.ArticleId, t.Tag });
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             base.OnModelCreating(modelBuilder);
         }

@@ -1,5 +1,6 @@
 ALTER PROCEDURE [dbo].[up_Article_Insert] (
-	@Title nvarchar(100)
+	@ArticleId int OUTPUT
+	,@Title nvarchar(100)
 	,@UrlTitle nvarchar(100)
 	,@Text nvarchar(max)
 	,@Html nvarchar(max)
@@ -27,4 +28,6 @@ INSERT INTO dbo.Article (
 	,@UpdatedBy
 	,'Initial version'
 )
+
+SET @ArticleId = @@IDENTITY
 GO
