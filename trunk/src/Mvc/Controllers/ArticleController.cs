@@ -1,15 +1,14 @@
 ﻿namespace Otter.Controllers
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Web.Mvc;
     using AutoMapper;
+    using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
-using Otter.Infrastructure;
-    using System.Diagnostics;
-    using System;
-    using System.Collections.Generic;
-    using System.Text.RegularExpressions;
 
     public class ArticleController : Controller
     {

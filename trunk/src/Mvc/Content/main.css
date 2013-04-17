@@ -9,6 +9,9 @@ body {
   padding: 0;
   margin: 1em 50px;
 }
+code {
+  font-family: Consolas, Monospace;
+}
 #header {
   overflow: hidden;
   margin-bottom: 1em;
@@ -43,13 +46,7 @@ div#search {
 }
 div.actions {
   float: right;
-  padding: 1em 1em 0 1em;
-  margin: 1em 0 1em 1em;
-  border: 1px solid #d9d9d9;
-}
-div.actions a {
-  display: block;
-  margin-bottom: 1em;
+  margin-top: 0.6em;  /* same as h1.title */
 }
 .authorship {
   font-style: italic;
