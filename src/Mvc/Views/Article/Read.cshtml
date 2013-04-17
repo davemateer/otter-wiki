@@ -2,12 +2,25 @@
 @{
   ViewBag.Title = Model.Title;
 }
-<h1 class="title">@ViewBag.Title</h1>
 <div class="actions">
   @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle }, new { @class = "edit-button" })
   @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "history-button" })
 </div>
+<h1 class="title">@ViewBag.Title</h1>
 <div class="content">
   @Html.Raw(Model.Html)
 </div>
 <p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : "by " + Model.UpdatedBy)</p>
+@section head
+{
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />
+  <script src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
+
+  <script type="text/javascript">
+    $(document).ready(function () {
+      $('code').addClass("prettyprint");
+      $('pre > code').parent().addClass("prettyprint");
+      prettyPrint();
+    });
+  </script>
+}
