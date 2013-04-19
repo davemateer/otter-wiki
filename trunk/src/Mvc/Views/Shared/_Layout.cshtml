@@ -13,7 +13,7 @@
 </head>
 <body>
   <div id="header">
-    @Html.ActionLink("Create new article", "Create", "Article", null, new { id = "add-article-link" })
+    @Html.ActionLink("Create new article", "Create", "Article", null, new { id = "add-article-link", @class = "add-button" })
     @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
     {
       <input type="text" id="query" name="query" />

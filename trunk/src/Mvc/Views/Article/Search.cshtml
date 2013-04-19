@@ -1,0 +1,36 @@
+﻿@model Otter.Models.ArticleSearchModel
+@{
+  ViewBag.Title = "Search results: " + Model.Query;
+}
+<h1 class="title">
+  Search results</h1>
+<p>
+  Searched for: <strong>@Model.Query</strong></p>
+@if (Model.Tags.Any())
+{
+  <p>
+    Matching tags:</p>
+  <ul class="search-results-tags">
+    @foreach (var tag in Model.Tags)
+    {
+      <li>@Html.ActionLink(tag, "Tagged", new { id = tag })</li>
+    }
+  </ul>
+}
+@if (Model.Articles.Any())
+{
+  <p>@Model.Articles.Count() article(s) returned:</p>
+  <ul class="search-results-articles">
+    @foreach (var article in Model.Articles)
+    {
+      <li>
+        @Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "search-result-title" })
+        <span class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedDtm, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedBy)</span></li>
+    }
+  </ul>
+}
+else
+{
+  <p>
+    No matching articles could be found.</p>
+}

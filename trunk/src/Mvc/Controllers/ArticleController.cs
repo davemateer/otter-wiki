@@ -184,5 +184,18 @@
             var tags = this.articleRepository.ArticleTags.Select(t => t.Tag).Distinct().OrderBy(t => t);
             return Json(tags.Select(t => new { label = t, value = t }), JsonRequestBehavior.AllowGet);
         }
+
+        [HttpGet]
+        public ActionResult Search(string query)
+        {
+            var model = new ArticleSearchModel()
+            {
+                Articles = this.articleRepository.Search(query, this.User.Identity.Name),
+                Query = query,
+                Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct()
+            };
+
+            return View(model);
+        }
     }
 }
