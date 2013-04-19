@@ -223,5 +223,56 @@
 
             return this.converter.Convert(text);
         }
-   }
+
+        public IEnumerable<ArticleSearchResult> Search(string query, string userId)
+        {
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_Search";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[2];
+
+            parameters[0] = new SqlParameter("@Query", SqlDbType.NVarChar, 1000);
+            parameters[0].Value = query;
+
+            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 50);
+            parameters[1].Value = userId;
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
+                    int titleOrdinal = reader.GetOrdinal("Title");
+                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
+                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+
+                    var results = new List<ArticleSearchResult>();
+
+                    while (reader.Read())
+                    {
+                        results.Add(new ArticleSearchResult()
+                        {
+                            Title = reader.GetString(titleOrdinal),
+                            UpdatedBy = reader.GetString(updatedByOrdinal),
+                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UrlTitle = reader.GetString(urlTitleOrdinal)
+                        });
+                    }
+
+                    return results;
+
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+    }
 }

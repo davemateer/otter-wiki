@@ -19,5 +19,7 @@ using Otter.Domain;
         void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId);
 
         string GetRevisionHtml(int articleId, int revision);
+
+        IEnumerable<ArticleSearchResult> Search(string query, string userId);
     }
 }

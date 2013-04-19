@@ -1,5 +1,41 @@
 ﻿@{
-    ViewBag.Title = "Index";
+  Layout = null;
 }
-<h1 class="title">@ViewBag.Title</h1>
-<p>@Html.ActionLink("Create new article", "Create")</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>Home</title>
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/themes/otter/minified/jquery-ui.min.css")" />
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
+  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-ui-1.10.2.min.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
+  <style type="text/css">
+    .index-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: 300px;
+      margin-top: -150px;
+      width: 300px;
+      margin-left: -150px;
+      text-align: center;
+    }
+    .add-button {
+      margin-top: 2em;
+    }
+  </style>
+</head>
+<body>
+  <div class="index-content">
+    @using (Html.BeginForm("Search", "Article", FormMethod.Get))
+    {
+      <input type="text" id="query" name="query" />
+      <input type="submit" class="query-submit" value="Search" />
+    }
+    @Html.ActionLink("Create new article", "Create", "Article", null, new { @class = "add-button" })
+  </div>
+</body>
+</html>

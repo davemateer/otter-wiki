@@ -1,5 +1,5 @@
 ﻿$(document).ready(function () {
-  $('#add-article-link').button({
+  $('.add-button').button({
     icons: {
       primary: "ui-icon-circle-plus"
     }
@@ -17,5 +17,5 @@
     }
   });
 
-  $('#search-form input.query-submit').button();
+  $('input.query-submit').button();
 });
