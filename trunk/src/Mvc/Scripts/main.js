@@ -17,5 +17,5 @@
     }
   });
 
-  $('input.query-submit').button();
+  $('input.query-submit, input.submit-button').button();
 });
