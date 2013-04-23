@@ -90,3 +90,15 @@ ul.search-results-tags a:hover {
   margin-left: 2em;
   font-size: 0.8em;
 }
+a.select-all {
+  display: block;
+  padding: 2px 4px;
+  border-width: 0 1px 1px 1px;
+  border-style: solid;
+  border-color: #666;
+  float: right;
+  font-size: 11px;
+}
+pre.prettyprint {
+  margin-bottom: 0;
+}

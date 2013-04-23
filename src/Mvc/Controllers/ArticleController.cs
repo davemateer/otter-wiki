@@ -114,6 +114,7 @@
             }
 
             var model = Mapper.Map<ArticleEditModel>(article);
+            model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
             return View(model);
         }
 

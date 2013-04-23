@@ -1,6 +1,8 @@
 ﻿namespace Otter.Models
 {
     using System;
+    using System.ComponentModel.DataAnnotations;
+    using AutoMapper;
 
     public sealed class ArticleEditModel
     {
@@ -18,6 +20,11 @@
 
         public string UpdatedBy { get; set; }
 
+        [IgnoreMap]
+        [Display(Name="Reason for change")]
         public string Comment { get; set; }
+
+        [IgnoreMap]
+        public string Tags { get; set; }
     }
 }
