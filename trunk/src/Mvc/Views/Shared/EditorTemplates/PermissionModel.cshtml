@@ -1,0 +1,28 @@
+﻿@model Otter.Models.PermissionModel
+<table class="security">
+  <tbody>
+    <tr>
+      <td>Can be viewed by: </td>
+      <td>
+        <input class="permission-option" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionEveryone")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("ReadOption")" value="Everyone"@{ if (Model.ReadOption == Otter.Models.PermissionOption.Everyone){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionEveryone")">Everyone</label>
+        <input class="permission-option" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionJustMe")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("ReadOption")" value="JustMe"@{ if (Model.ReadOption == Otter.Models.PermissionOption.JustMe){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionJustMe")">Just me</label>
+        <input class="permission-option specified" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionSpecified")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("ReadOption")" value="Specified"@{ if (Model.ReadOption == Otter.Models.PermissionOption.Specified){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadOptionSpecified")">Specific users and groups:</label>
+        <input class="permission-accounts" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("ReadAccounts")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("ReadAccounts")" size="80" type="text" value="@Model.ReadAccounts"@{ if (Model.ReadOption != Otter.Models.PermissionOption.Specified) {<text>disabled="disabled"</text>}} />      </td>
+    </tr>
+    <tr>
+      <td>Can be changed by:</td>
+      <td>
+        <input class="permission-option" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionEveryone")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("EditOption")" value="Everyone"@{ if (Model.EditOption == Otter.Models.PermissionOption.Everyone){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionEveryone")">Everyone</label>
+        <input class="permission-option" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionJustMe")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("EditOption")" value="JustMe"@{ if (Model.EditOption == Otter.Models.PermissionOption.JustMe){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionJustMe")">Just me</label>
+        <input class="permission-option specified" type="radio" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionSpecified")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("EditOption")" value="Specified"@{ if (Model.EditOption == Otter.Models.PermissionOption.Specified){<text>checked="checked"</text>}} />
+        <label for="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditOptionSpecified")">Specific users and groups:</label>
+        <input class="permission-accounts" id="@ViewData.TemplateInfo.GetFullHtmlFieldId("EditAccounts")" name="@ViewData.TemplateInfo.GetFullHtmlFieldName("EditAccounts")" size="80" type="text" value="@Model.EditAccounts"@{ if (Model.EditOption != Otter.Models.PermissionOption.Specified){<text>disabled="disabled"</text>}} />
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -7,12 +7,13 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
-  <div class="editor-label">
-    Edit the article text using <a href="#">Markdown syntax</a>:</div>
+  <div class="editor-label">Edit the article text using <a href="#">Markdown syntax</a>:</div>
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
+  <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
+  <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
   <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
   @Html.HiddenFor(m => m.ArticleId)
@@ -20,10 +21,6 @@
   @Html.HiddenFor(m => m.UpdatedDtm)
   @Html.HiddenFor(m => m.Revision)
   @Html.HiddenFor(m => m.UrlTitle)
-  <fieldset>
-  <legend>Security</legend>
-  Can be read by: <input type="radio" />
-  </fieldset>
   <input type="submit" value="Save changes" class="submit-button" />
 }
 @section head
@@ -35,6 +32,9 @@
     }
     #Title, #Tags, #Comment {
       width: 450px;
+    }
+    input.submit-button {
+      margin-top: 1em;
     }
   </style>
   <script type="text/javascript">

@@ -26,5 +26,8 @@
 
         [IgnoreMap]
         public string Tags { get; set; }
+
+        [IgnoreMap]
+        public PermissionModel Security { get; set; }
     }
 }
