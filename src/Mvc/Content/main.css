@@ -12,6 +12,33 @@ body {
 code {
   font-family: Consolas, Monospace;
 }
+textarea {
+  min-height: 75px;
+}
+.editor-label {
+  margin: 1em 0 0 0;
+  font-weight: bold;
+}
+.editor-field {
+  margin: 0.5em 0 0 0;
+}
+.field-validation-error {
+  color: #ff0000;
+}
+.field-validation-valid {
+  display: none;
+}
+.input-validation-error {
+  border: 1px solid #ff0000;
+  background-color: #ffeeee;
+}
+.validation-summary-errors {
+  font-weight: bold;
+  color: #ff0000;
+}
+.validation-summary-valid {
+  display: none;
+}
 #header {
   overflow: hidden;
   margin-bottom: 1em;
@@ -101,4 +128,17 @@ a.select-all {
 }
 pre.prettyprint {
   margin-bottom: 0;
+}
+input.permission-option {
+  margin-left: 1em;
+}
+table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  margin: 0;
+  padding: 0;
+}
+table.security td {
+  margin: 0;
+  padding: 0;
 }
