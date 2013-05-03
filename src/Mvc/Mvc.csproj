@@ -98,6 +98,7 @@
     <Compile Include="Domain\ArticleBase.cs" />
     <Compile Include="Domain\ArticleHistory.cs" />
     <Compile Include="Domain\ArticleSearchResult.cs" />
+    <Compile Include="Domain\ArticleSecurity.cs" />
     <Compile Include="Domain\ArticleTag.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -127,6 +128,7 @@
     <Compile Include="Repository\Concrete\ArticleRepository.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Content\images\ajax-loader.gif" />
     <Content Include="Content\main.css" />
     <Content Include="Content\Prettify\prettify.css" />
     <Content Include="Content\Prettify\Themes\desert.css" />
@@ -316,7 +318,6 @@
     <Content Include="Views\Article\Edit.cshtml" />
     <Content Include="Views\Article\History.cshtml" />
     <Content Include="Views\Article\Search.cshtml" />
-    <Content Include="Views\Article\ViewPage1.cshtml" />
     <Content Include="Views\Shared\EditorTemplates\PermissionModel.cshtml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

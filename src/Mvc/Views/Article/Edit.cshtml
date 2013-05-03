@@ -7,7 +7,8 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">Edit the article text using <a href="#">Markdown syntax</a>:</div>
+  <div class="editor-label">
+    Edit the article text using <a href="#">Markdown syntax</a>:</div>
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
   <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
@@ -21,7 +22,10 @@
   @Html.HiddenFor(m => m.UpdatedDtm)
   @Html.HiddenFor(m => m.Revision)
   @Html.HiddenFor(m => m.UrlTitle)
-  <input type="submit" value="Save changes" class="submit-button" />
+  <div class="edit-actions">
+    <input type="submit" value="Save changes" class="submit-button" />
+    @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
+  </div>
 }
 @section head
 {
@@ -33,15 +37,14 @@
     #Title, #Tags, #Comment {
       width: 450px;
     }
-    input.submit-button {
+    div.edit-actions {
       margin-top: 1em;
     }
   </style>
   <script type="text/javascript">
     $(document).ready(function () {
-
       $('#edit-form').submit(function () {
-        if ($('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without a comment?')) {
+        if ($('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without specifying a reason for the change?')) {
           return false;
         }
       });

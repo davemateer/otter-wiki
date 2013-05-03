@@ -23,3 +23,8 @@ GO
 ALTER TABLE [dbo].[ArticleTag] CHECK CONSTRAINT [FK_ArticleTag_Article]
 GO
 
+ALTER TABLE [dbo].[ArticleTag]  WITH CHECK ADD  CONSTRAINT [CK_ArticleTag_TagLength] CHECK  ((len([Tag])>=(3)))
+GO
+
+ALTER TABLE [dbo].[ArticleTag] CHECK CONSTRAINT [CK_ArticleTag_TagLength]
+GO

@@ -142,3 +142,8 @@ table.security td {
   margin: 0;
   padding: 0;
 }
+.ui-autocomplete-loading {
+  background-image: url('images/ajax-loader.gif');
+  background-position: right center;
+  background-repeat: no-repeat;
+}

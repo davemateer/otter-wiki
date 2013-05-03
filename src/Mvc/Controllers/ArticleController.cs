@@ -115,7 +115,10 @@
 
             var model = Mapper.Map<ArticleEditModel>(article);
             model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
-            model.Security = new PermissionModel();  // TODO
+
+            model.Security = new PermissionModel();
+            this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.User.Identity.Name);
+
             return View(model);
         }
 
@@ -181,10 +184,10 @@
         }
 
         [HttpGet]
-        public ActionResult GetUniqueTags()
+        public ActionResult GetUniqueTags(string query)
         {
-            var tags = this.articleRepository.ArticleTags.Select(t => t.Tag).Distinct().OrderBy(t => t);
-            return Json(tags.Select(t => new { label = t, value = t }), JsonRequestBehavior.AllowGet);
+            var tags = this.articleRepository.ArticleTags.Where(t => t.Tag.StartsWith(query)).Select(t => t.Tag).Distinct().OrderBy(t => t);
+            return Json(tags.ToList(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]

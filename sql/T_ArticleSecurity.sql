@@ -1,7 +1,7 @@
 CREATE TABLE [dbo].[ArticleSecurity](
 	[ArticleId] [int] NOT NULL,
 	[Scope] [char](1) NOT NULL,
-	[EntityId] [nvarchar](50) NOT NULL,
+	[EntityId] [nvarchar](256) NOT NULL,
 	[Permission] [char](1) NOT NULL,
  CONSTRAINT [PK_ArticleSecurity] PRIMARY KEY CLUSTERED 
 (
