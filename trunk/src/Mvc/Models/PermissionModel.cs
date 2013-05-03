@@ -4,18 +4,12 @@
 
     public sealed class PermissionModel
     {
-        public PermissionModel()
-        {
-            ReadAccounts = "test";
-            EditAccounts = "edit test; test";
-        }
+        public PermissionOption ViewOption { get; set; }
 
-        public PermissionOption ReadOption { get; set; }
+        public string ViewAccounts { get; set; }
 
-        public string ReadAccounts { get; set; }
+        public PermissionOption ModifyOption { get; set; }
 
-        public PermissionOption EditOption { get; set; }
-
-        public string EditAccounts { get; set; }
+        public string ModifyAccounts { get; set; }
     }
 }

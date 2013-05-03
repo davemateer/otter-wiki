@@ -10,11 +10,19 @@
     using Otter.Infrastructure;
     using Otter.Repository.Abstract;
     using System.Transactions;
+    using Otter.Models;
+    using System.DirectoryServices;
 
     public sealed class ArticleRepository : IArticleRepository
     {
         private readonly IApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
+
+        private const string PermissionView = "V";
+        private const string PermissionModify = "M";
+        private const string ScopeEveryone = "E";
+        private const string ScopeGroup = "G";
+        private const string ScopeIndividual = "I";
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter)
         {
@@ -30,6 +38,11 @@
         public IQueryable<ArticleHistory> ArticleHistory
         {
             get { return this.context.ArticleHistory; }
+        }
+
+        public IQueryable<ArticleSecurity> ArticleSecurity
+        {
+            get { return this.context.ArticleSecurity; }
         }
 
         public IQueryable<ArticleTag> ArticleTags
@@ -273,6 +286,152 @@
             {
                 conn.Close();
             }
+        }
+
+        public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
+        {
+            // Assume that permissions are specified groups and individuals. If we find an "Everyone" scope in the
+            // security tokens, we will modify this.
+            model.ModifyOption = PermissionOption.Specified;
+            model.ViewOption = PermissionOption.Specified;
+
+            var viewGroups = new List<string>();
+            var viewUsers = new List<string>();
+            var modifyGroups = new List<string>();
+            var modifyUsers = new List<string>();
+
+            string owner = this.Articles.Single(a => a.ArticleId == articleId).UpdatedBy;
+            if (string.IsNullOrEmpty(owner))
+            {
+                // Should never be the case, but if it is, give rights to everyone.
+                model.ViewOption = PermissionOption.Everyone;
+                model.ModifyOption = PermissionOption.Everyone;
+            }
+            else
+            {
+                viewUsers.Add(owner);
+                modifyUsers.Add(owner);
+            }
+
+            var tokens = this.ArticleSecurity.Where(s => s.ArticleId == articleId);
+            foreach (var token in tokens)
+            {
+                // If this is a view token and we've already learned that everyone can view, there's no need to process the record.
+                if (model.ViewOption == PermissionOption.Everyone && token.Permission == PermissionView)
+                {
+                    continue;
+                }
+
+                // If this is a modify token and we've already learned that everyone can modify, there's no need to process the record.
+                if (model.ModifyOption == PermissionOption.Everyone && token.Permission == PermissionModify)
+                {
+                    continue;
+                }
+
+                if (token.Scope == ScopeEveryone)
+                {
+                    model.ViewOption = PermissionOption.Everyone;
+                    viewGroups.Clear();
+                    viewUsers.Clear();
+
+                    if (token.Permission == PermissionModify)
+                    {
+                        model.ModifyOption = PermissionOption.Everyone;
+                        modifyGroups.Clear();
+                        modifyUsers.Clear();
+                    }
+                }
+                else if (token.Scope == ScopeGroup)
+                {
+                    if (token.Permission == PermissionView)
+                    {
+                        viewGroups.Add(token.EntityId);
+                    }
+                    else if (token.Permission == PermissionModify)
+                    {
+                        modifyGroups.Add(token.EntityId);
+                    }
+                }
+                else if (token.Scope == ScopeIndividual)
+                {
+                    if (token.Permission == PermissionView)
+                    {
+                        viewUsers.Add(token.EntityId);
+                    }
+                    else if (token.Permission == PermissionModify)
+                    {
+                        modifyUsers.Add(token.EntityId);
+                    }
+                }
+            }
+
+            if (viewUsers.Count == 1 && viewUsers[0] == userId)
+            {
+                model.ViewOption = PermissionOption.JustMe;
+                viewUsers.Clear();
+            }
+
+            if (modifyUsers.Count == 1 && modifyUsers[0] == userId)
+            {
+                model.ModifyOption = PermissionOption.JustMe;
+                modifyUsers.Clear();
+            }
+
+            viewUsers.RemoveAll(s => string.IsNullOrEmpty(s));
+            viewGroups.RemoveAll(s => string.IsNullOrEmpty(s));
+            modifyUsers.RemoveAll(s => string.IsNullOrEmpty(s));
+            modifyGroups.RemoveAll(s => string.IsNullOrEmpty(s));
+
+            using (var searcher = new DirectorySearcher())
+            {
+                for (int i = 0; i < viewUsers.Count; i++)
+                {
+                    searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", viewUsers[i]);
+                    SearchResult result = searcher.FindOne();
+                    if (result != null)
+                    {
+                        viewUsers[i] = string.Format("{0} [{1}]", result.Properties["displayName"][0], result.Properties["sAMAccountName"][0]);
+                    }
+                }
+
+                for (int i = 0; i < modifyUsers.Count; i++)
+                {
+                    searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", modifyUsers[i]);
+                    SearchResult result = searcher.FindOne();
+                    if (result != null)
+                    {
+                        modifyUsers[i] = string.Format("{0} [{1}]", result.Properties["displayName"][0], result.Properties["sAMAccountName"][0]);
+                    }
+                }
+
+                for (int i = 0; i < viewGroups.Count; i++)
+                {
+                    searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}*))", viewGroups[i]);
+                    SearchResult result = searcher.FindOne();
+                    if (result != null)
+                    {
+                        viewGroups[i] = string.Format("{0} (Group)", result.Properties["cn"][0]);
+                    }
+                }
+
+                for (int i = 0; i < modifyGroups.Count; i++)
+                {
+                    searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}*))", modifyGroups[i]);
+                    SearchResult result = searcher.FindOne();
+                    if (result != null)
+                    {
+                        modifyGroups[i] = string.Format("{0} (Group)", result.Properties["cn"][0]);
+                    }
+                }
+            }
+
+            viewUsers.AddRange(viewGroups);
+            viewUsers.Sort();
+            model.ViewAccounts = string.Join("; ", viewUsers);
+
+            modifyUsers.AddRange(modifyGroups);
+            modifyUsers.Sort();
+            model.ModifyAccounts = string.Join("; ", modifyUsers);
         }
     }
 }

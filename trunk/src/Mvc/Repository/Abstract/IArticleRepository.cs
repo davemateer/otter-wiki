@@ -1,16 +1,17 @@
 ﻿namespace Otter.Repository
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
-using Otter.Domain;
+    using Otter.Domain;
+    using Otter.Models;
 
     public interface IArticleRepository
     {
         IQueryable<Article> Articles { get; }
 
         IQueryable<ArticleHistory> ArticleHistory { get; }
+
+        IQueryable<ArticleSecurity> ArticleSecurity { get; }
 
         IQueryable<ArticleTag> ArticleTags { get; }
 
@@ -21,5 +22,7 @@ using Otter.Domain;
         string GetRevisionHtml(int articleId, int revision);
 
         IEnumerable<ArticleSearchResult> Search(string query, string userId);
+
+        void HydratePermissionModel(PermissionModel model, int articleId, string userId);
     }
 }
