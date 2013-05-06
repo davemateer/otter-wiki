@@ -17,7 +17,7 @@
 
         string InsertArticle(string title, string text, IEnumerable<string> tags, string userId);
 
-        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId);
+        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<ArticleSecurity> security, string userId);
 
         string GetRevisionHtml(int articleId, int revision);
 

@@ -4,25 +4,20 @@
     using System.Configuration;
     using System.Data;
     using System.Data.SqlClient;
+    using System.DirectoryServices;
     using System.Linq;
+    using System.Transactions;
     using DiffMatchPatch;
     using Otter.Domain;
     using Otter.Infrastructure;
-    using Otter.Repository.Abstract;
-    using System.Transactions;
     using Otter.Models;
-    using System.DirectoryServices;
+    using Otter.Repository.Abstract;
+    using System;
 
     public sealed class ArticleRepository : IArticleRepository
     {
         private readonly IApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
-
-        private const string PermissionView = "V";
-        private const string PermissionModify = "M";
-        private const string ScopeEveryone = "E";
-        private const string ScopeGroup = "G";
-        private const string ScopeIndividual = "I";
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter)
         {
@@ -49,7 +44,7 @@
         {
             get { return this.context.ArticleTags; }
         }
- 
+
         public string InsertArticle(string title, string text, IEnumerable<string> tags, string userId)
         {
             string urlTitle = Sluggifier.GenerateSlug(title);
@@ -64,7 +59,7 @@
 
             var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = connection.CreateCommand();
-            
+
             connection.Open();
 
             try
@@ -128,7 +123,7 @@
             return urlTitle;
         }
 
-        public void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, string userId)
+        public void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<ArticleSecurity> security, string userId)
         {
             // Create diff from current revision. Insert history record.
             string currentText = this.context.Articles.Where(a => a.ArticleId == articleId).Select(a => a.Text).Single();
@@ -139,48 +134,111 @@
             // Update existing record.
             string html = this.converter.Convert(text);
 
-            var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = connection.CreateCommand();
-            cmd.CommandText = "up_Article_Update";
-            cmd.CommandType = CommandType.StoredProcedure;
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
 
-            SqlParameter[] parameters = new SqlParameter[8];
-
-            parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
-            parameters[0].Value = articleId;
-
-            parameters[1] = new SqlParameter("@Title", SqlDbType.NVarChar, 100);
-            parameters[1].Value = title;
-
-            parameters[2] = new SqlParameter("@UrlTitle", SqlDbType.NVarChar, 100);
-            parameters[2].Value = urlTitle;
-
-            parameters[3] = new SqlParameter("@Text", SqlDbType.NVarChar, -1);
-            parameters[3].Value = text;
-
-            parameters[4] = new SqlParameter("@Html", SqlDbType.NVarChar, -1);
-            parameters[4].Value = html;
-
-            parameters[5] = new SqlParameter("@Delta", SqlDbType.NVarChar, -1);
-            parameters[5].Value = delta;
-
-            parameters[6] = new SqlParameter("@UpdatedBy", SqlDbType.NVarChar, 50);
-            parameters[6].Value = userId;
-
-            parameters[7] = new SqlParameter("@Comment", SqlDbType.NVarChar, 100);
-            parameters[7].Value = comment ?? string.Empty;
-
-            cmd.Parameters.AddRange(parameters);
-
-            connection.Open();
-
+            conn.Open();
             try
             {
-                cmd.ExecuteNonQuery();
+                using (var scope = new TransactionScope())
+                {
+                    cmd.CommandText = "up_Article_Update";
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter[] parameters = new SqlParameter[8];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Title", SqlDbType.NVarChar, 100);
+                    parameters[1].Value = title;
+
+                    parameters[2] = new SqlParameter("@UrlTitle", SqlDbType.NVarChar, 100);
+                    parameters[2].Value = urlTitle;
+
+                    parameters[3] = new SqlParameter("@Text", SqlDbType.NVarChar, -1);
+                    parameters[3].Value = text;
+
+                    parameters[4] = new SqlParameter("@Html", SqlDbType.NVarChar, -1);
+                    parameters[4].Value = html;
+
+                    parameters[5] = new SqlParameter("@Delta", SqlDbType.NVarChar, -1);
+                    parameters[5].Value = delta;
+
+                    parameters[6] = new SqlParameter("@UpdatedBy", SqlDbType.NVarChar, 50);
+                    parameters[6].Value = userId;
+
+                    parameters[7] = new SqlParameter("@Comment", SqlDbType.NVarChar, 100);
+                    parameters[7].Value = comment ?? string.Empty;
+
+                    cmd.Parameters.AddRange(parameters);
+
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = "SELECT [Scope], [EntityId] FROM [dbo].[ArticleSecurity] WHERE [ArticleId] = @ArticleId";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Clear();
+                    cmd.Parameters.AddWithValue("@ArticleId", articleId);
+
+                    var recordsToDelete = new List<Tuple<string, string>>();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            if (!security.Any(s => s.EntityId == reader.GetString(1) && s.Scope == reader.GetString(0)))
+                            {
+                                recordsToDelete.Add(Tuple.Create(reader.GetString(0), reader.GetString(1)));
+                            }
+                        }
+                    }
+
+                    cmd.CommandText = "up_ArticleSecurity_Delete";
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Clear();
+                    parameters = new SqlParameter[3];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Scope", SqlDbType.Char, 1);
+                    parameters[2] = new SqlParameter("@EntityId", SqlDbType.NVarChar, 256);
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var record in recordsToDelete)
+                    {
+                        cmd.Parameters[1].Value = record.Item1;
+                        cmd.Parameters[2].Value = record.Item2;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    cmd.CommandText = "up_ArticleSecurity_Update";
+                    cmd.Parameters.Clear();
+
+                    parameters = new SqlParameter[4];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Scope", SqlDbType.Char, 1);
+                    parameters[2] = new SqlParameter("@EntityId", SqlDbType.NVarChar, 256);
+                    parameters[3] = new SqlParameter("@Permission", SqlDbType.Char, 1);
+
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var securityRecord in security)
+                    {
+                        cmd.Parameters[1].Value = securityRecord.Scope;
+                        cmd.Parameters[2].Value = securityRecord.EntityId ?? string.Empty;
+                        cmd.Parameters[3].Value = securityRecord.Permission;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    scope.Complete();
+                }
             }
             finally
             {
-                connection.Close();
+                conn.Close();
             }
         }
 
@@ -226,7 +284,7 @@
                             text = (string)results[0];
                         }
                     }
-                    
+
                 }
             }
             finally
@@ -300,65 +358,52 @@
             var modifyGroups = new List<string>();
             var modifyUsers = new List<string>();
 
-            string owner = this.Articles.Single(a => a.ArticleId == articleId).UpdatedBy;
-            if (string.IsNullOrEmpty(owner))
-            {
-                // Should never be the case, but if it is, give rights to everyone.
-                model.ViewOption = PermissionOption.Everyone;
-                model.ModifyOption = PermissionOption.Everyone;
-            }
-            else
-            {
-                viewUsers.Add(owner);
-                modifyUsers.Add(owner);
-            }
-
             var tokens = this.ArticleSecurity.Where(s => s.ArticleId == articleId);
             foreach (var token in tokens)
             {
                 // If this is a view token and we've already learned that everyone can view, there's no need to process the record.
-                if (model.ViewOption == PermissionOption.Everyone && token.Permission == PermissionView)
+                if (model.ViewOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
                 {
                     continue;
                 }
 
                 // If this is a modify token and we've already learned that everyone can modify, there's no need to process the record.
-                if (model.ModifyOption == PermissionOption.Everyone && token.Permission == PermissionModify)
+                if (model.ModifyOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                 {
                     continue;
                 }
 
-                if (token.Scope == ScopeEveryone)
+                if (token.Scope == Otter.Domain.ArticleSecurity.ScopeEveryone)
                 {
                     model.ViewOption = PermissionOption.Everyone;
                     viewGroups.Clear();
                     viewUsers.Clear();
 
-                    if (token.Permission == PermissionModify)
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         model.ModifyOption = PermissionOption.Everyone;
                         modifyGroups.Clear();
                         modifyUsers.Clear();
                     }
                 }
-                else if (token.Scope == ScopeGroup)
+                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeGroup)
                 {
-                    if (token.Permission == PermissionView)
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
                     {
                         viewGroups.Add(token.EntityId);
                     }
-                    else if (token.Permission == PermissionModify)
+                    else if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         modifyGroups.Add(token.EntityId);
                     }
                 }
-                else if (token.Scope == ScopeIndividual)
+                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeIndividual)
                 {
-                    if (token.Permission == PermissionView)
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
                     {
                         viewUsers.Add(token.EntityId);
                     }
-                    else if (token.Permission == PermissionModify)
+                    else if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         modifyUsers.Add(token.EntityId);
                     }
