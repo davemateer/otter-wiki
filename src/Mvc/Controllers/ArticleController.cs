@@ -9,16 +9,21 @@
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
+    using Otter.Domain;
+    using System.Text.RegularExpressions;
+    using System.DirectoryServices.AccountManagement;
 
     public class ArticleController : Controller
     {
         private readonly IArticleRepository articleRepository;
         private readonly ITextToHtmlConverter htmlConverter;
+        private readonly ISecurityRepository securityRepository;
 
-        public ArticleController(IArticleRepository articleRepository, ITextToHtmlConverter htmlConverter)
+        public ArticleController(IArticleRepository articleRepository, ITextToHtmlConverter htmlConverter, ISecurityRepository securityRepository)
         {
             this.articleRepository = articleRepository;
             this.htmlConverter = htmlConverter;
+            this.securityRepository = securityRepository;
         }
 
         [HttpGet]
@@ -76,7 +81,7 @@
 
             List<string> tags = SplitTags(model.Tags);
 
-            string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, this.User.Identity.Name);
+            string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             return RedirectToAction("Read", new { id = title });
         }
 
@@ -117,7 +122,7 @@
             model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
 
             model.Security = new PermissionModel();
-            this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.User.Identity.Name);
+            this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
 
             return View(model);
         }
@@ -126,6 +131,8 @@
         [ValidateInput(false)]
         public ActionResult Edit(ArticleEditModel model)
         {
+            List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
+
             if (!this.ModelState.IsValid)
             {
                 return this.View(model);
@@ -133,8 +140,141 @@
 
             // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
 
-            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, this.User.Identity.Name);
+            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             return RedirectToAction("Read", new { id = model.UrlTitle });
+        }
+
+        private static List<ArticleSecurity> PopulateSecurityRecords(PermissionModel model, ModelStateDictionary modelState, string userId, ISecurityRepository securityRepository)
+        {
+            // Validate and populate security records
+            var security = new List<ArticleSecurity>();
+
+            if (model.ModifyOption == PermissionOption.Everyone)
+            {
+                security.Add(new ArticleSecurity()
+                {
+                    Permission = ArticleSecurity.PermissionModify,
+                    Scope = ArticleSecurity.ScopeEveryone
+                });
+
+                // No need to look any further; this is all inclusive.
+                return security;
+            }
+
+            switch (model.ModifyOption)
+            {
+                case PermissionOption.JustMe:
+                    security.Add(new ArticleSecurity()
+                    {
+                        EntityId = userId,
+                        Permission = ArticleSecurity.PermissionModify,
+                        Scope = ArticleSecurity.ScopeIndividual
+                    });
+
+                    break;
+
+                case PermissionOption.Specified:
+                    var entities = model.ModifyAccounts.Split(new char[] { ';' }).Select(s => s.Trim());
+                    foreach (var entity in entities)
+                    {
+                        if (string.IsNullOrEmpty(entity))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var found = securityRepository.Find(entity);
+                            if (found == null)
+                            {
+                                modelState.AddModelError("Security", "TODO - not found");
+                            }
+
+                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            {
+                                security.Add(new ArticleSecurity()
+                                {
+                                    EntityId = found.EntityId,
+                                    Permission = ArticleSecurity.PermissionModify,
+                                    Scope = found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
+                                });
+                            }
+                        }
+                        catch (MultipleMatchesException)
+                        {
+                            modelState.AddModelError("Security", "TODO - duplicate");
+                        }
+                    }
+                    break;
+
+                default:
+                    throw new NotSupportedException(string.Format("{0} is not supported.", model.ModifyOption));
+            }
+
+            // Now that we know who can modify, add the users who can view.
+            switch (model.ViewOption)
+            {
+                case PermissionOption.Everyone:
+                    security.Add(new ArticleSecurity()
+                    {
+                        Permission = ArticleSecurity.PermissionView,
+                        Scope = ArticleSecurity.ScopeEveryone
+                    });
+
+                    break;
+
+                case PermissionOption.JustMe:
+                    if (!security.Exists(s => s.Scope == ArticleSecurity.ScopeIndividual && s.EntityId == userId))
+                    {
+                        security.Add(new ArticleSecurity()
+                        {
+                            EntityId = userId,
+                            Permission = ArticleSecurity.PermissionView,
+                            Scope = ArticleSecurity.ScopeIndividual
+                        });
+                    }
+
+                    break;
+
+                case PermissionOption.Specified:
+                    var entities = model.ViewAccounts.Split(new char[] { ';' }).Select(s => s.Trim());
+                    foreach (var entity in entities)
+                    {
+                        if (string.IsNullOrEmpty(entity))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var found = securityRepository.Find(entity);
+                            if (found == null)
+                            {
+                                modelState.AddModelError("Security", "TODO - not found");
+                            }
+
+                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            {
+                                security.Add(new ArticleSecurity()
+                                {
+                                    EntityId = found.EntityId,
+                                    Permission = ArticleSecurity.PermissionView,
+                                    Scope = found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
+                                });
+                            }
+                        }
+                        catch (MultipleMatchesException)
+                        {
+                            modelState.AddModelError("Security", "TODO - duplicate");
+                        }
+                    }
+                    break;
+
+                default:
+                    throw new NotSupportedException(string.Format("{0} is not supported.", model.ViewOption));
+            }
+
+            return security;
         }
 
         [HttpGet]
@@ -152,10 +292,10 @@
                                    where a.UrlTitle == id
                                    orderby h.Revision descending
                                    select new ArticleHistoryRecord()
-                                   { 
-                                       Revision = h.Revision, 
-                                       UpdatedBy = h.UpdatedBy, 
-                                       UpdatedDtm = h.UpdatedDtm, 
+                                   {
+                                       Revision = h.Revision,
+                                       UpdatedBy = h.UpdatedBy,
+                                       UpdatedDtm = h.UpdatedDtm,
                                        Comment = h.Comment
                                    };
 
@@ -195,7 +335,7 @@
         {
             var model = new ArticleSearchModel()
             {
-                Articles = this.articleRepository.Search(query, this.User.Identity.Name),
+                Articles = this.articleRepository.Search(query, this.securityRepository.StandardizeUserId(this.User.Identity.Name)),
                 Query = query,
                 Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct()
             };
