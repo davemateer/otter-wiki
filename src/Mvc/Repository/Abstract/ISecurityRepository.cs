@@ -10,7 +10,7 @@
     {
         IEnumerable<SecurityEntity> Search(string query);
 
-        SecurityEntity Find(string value);
+        SecurityEntity Find(string value, SecurityEntityTypes option);
 
         string StandardizeUserId(string userId);
     }

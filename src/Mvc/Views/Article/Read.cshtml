@@ -10,7 +10,7 @@
 <div class="content">
   @Html.Raw(Model.Html)
 </div>
-<p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : "by " + Model.UpdatedBy)</p>
+<p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</p>
 @section head
 {
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />

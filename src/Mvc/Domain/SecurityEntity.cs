@@ -6,6 +6,6 @@
 
         public string Name { get; set; }
 
-        public bool IsGroup { get; set; }
+        public SecurityEntityTypes EntityType { get; set; }
     }
 }

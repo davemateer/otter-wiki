@@ -18,11 +18,13 @@
     {
         private readonly IApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
+        private readonly ISecurityRepository securityRepository;
 
-        public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter)
+        public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
             this.context = context;
             this.converter = converter;
+            this.securityRepository = securityRepository;
         }
 
         public IQueryable<Article> Articles
@@ -297,6 +299,8 @@
 
         public IEnumerable<ArticleSearchResult> Search(string query, string userId)
         {
+            var results = new List<ArticleSearchResult>();
+
             var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = conn.CreateCommand();
             cmd.CommandText = "up_Article_Search";
@@ -323,8 +327,6 @@
                     int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
                     int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
 
-                    var results = new List<ArticleSearchResult>();
-
                     while (reader.Read())
                     {
                         results.Add(new ArticleSearchResult()
@@ -335,15 +337,26 @@
                             UrlTitle = reader.GetString(urlTitleOrdinal)
                         });
                     }
-
-                    return results;
-
                 }
             }
             finally
             {
                 conn.Close();
             }
+
+            results.ForEach(delegate(ArticleSearchResult sr)
+            {
+                if (!string.IsNullOrEmpty(sr.UpdatedBy))
+                {
+                    var entity = this.securityRepository.Find(sr.UpdatedBy, SecurityEntityTypes.User);
+                    if (entity != null)
+                    {
+                        sr.UpdatedByDisplayName = entity.Name;
+                    }
+                }
+            });
+
+            return results;
         }
 
         public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
@@ -388,22 +401,18 @@
                 }
                 else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeGroup)
                 {
-                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
-                    {
-                        viewGroups.Add(token.EntityId);
-                    }
-                    else if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                    viewGroups.Add(token.EntityId);
+
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         modifyGroups.Add(token.EntityId);
                     }
                 }
                 else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeIndividual)
                 {
-                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
-                    {
-                        viewUsers.Add(token.EntityId);
-                    }
-                    else if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                    viewUsers.Add(token.EntityId);
+                    
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         modifyUsers.Add(token.EntityId);
                     }

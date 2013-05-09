@@ -64,7 +64,7 @@
         public void PopulateSecurityRecords_SpecifyIndividual()
         {
             var securityRepository = new Mock<ISecurityRepository>(MockBehavior.Strict);
-            securityRepository.Setup(r => r.Find("Test User [tuser]")).Returns(new SecurityEntity() { EntityId = "tuser", IsGroup = false, Name = "Test User" });
+            securityRepository.Setup(r => r.Find("Test User [tuser]", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "tuser", EntityType = SecurityEntityTypes.User, Name = "Test User" });
 
             PermissionModel model = new PermissionModel()
             {
@@ -88,8 +88,8 @@
         public void PopulateSecurityRecords_SpecifyMultipleIndividuals()
         {
             var securityRepository = new Mock<ISecurityRepository>(MockBehavior.Strict);
-            securityRepository.Setup(r => r.Find("Test User [tuser]")).Returns(new SecurityEntity() { EntityId = "tuser", IsGroup = false, Name = "Test User" });
-            securityRepository.Setup(r => r.Find("Test User 2 [tuser2]")).Returns(new SecurityEntity() { EntityId = "tuser2", IsGroup = false, Name = "Test User 2" });
+            securityRepository.Setup(r => r.Find("Test User [tuser]", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "tuser", EntityType = SecurityEntityTypes.User, Name = "Test User" });
+            securityRepository.Setup(r => r.Find("Test User 2 [tuser2]", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "tuser2", EntityType = SecurityEntityTypes.User, Name = "Test User 2" });
 
             PermissionModel model = new PermissionModel()
             {
@@ -117,7 +117,7 @@
         public void PopulateSecurityRecords_SpecifyGroup()
         {
             var securityRepository = new Mock<ISecurityRepository>(MockBehavior.Strict);
-            securityRepository.Setup(r => r.Find("Test Group (Group)")).Returns(new SecurityEntity() { EntityId = "MyGroup", IsGroup = true, Name = "Test Group" });
+            securityRepository.Setup(r => r.Find("Test Group (Group)", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "MyGroup", EntityType = SecurityEntityTypes.Group, Name = "Test Group" });
 
             PermissionModel model = new PermissionModel()
             {
@@ -141,7 +141,7 @@
         public void PopulateSecurityRecords_DoNotDuplicateUser()
         {
             var securityRepository = new Mock<ISecurityRepository>(MockBehavior.Strict);
-            securityRepository.Setup(r => r.Find("Test User [tuser]")).Returns(new SecurityEntity() { EntityId = "tuser", IsGroup = false, Name = "Test User" });
+            securityRepository.Setup(r => r.Find("Test User [tuser]", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "tuser", EntityType = SecurityEntityTypes.User, Name = "Test User" });
 
             PermissionModel model = new PermissionModel()
             {
@@ -165,7 +165,7 @@
         public void PopulateSecurityRecords_DoNotDuplicateViewUser()
         {
             var securityRepository = new Mock<ISecurityRepository>(MockBehavior.Strict);
-            securityRepository.Setup(r => r.Find("Test User [tuser]")).Returns(new SecurityEntity() { EntityId = "tuser", IsGroup = false, Name = "Test User" });
+            securityRepository.Setup(r => r.Find("Test User [tuser]", SecurityEntityTypes.Any)).Returns(new SecurityEntity() { EntityId = "tuser", EntityType = SecurityEntityTypes.User, Name = "Test User" });
 
             PermissionModel model = new PermissionModel()
             {
