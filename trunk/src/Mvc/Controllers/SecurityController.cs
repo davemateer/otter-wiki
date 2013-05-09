@@ -23,7 +23,7 @@
 
             foreach (var result in searchResults)
             {
-                if (result.IsGroup)
+                if (result.EntityType == SecurityEntityTypes.Group)
                 {
                     displayResults.Add(string.Format("{0} (Group)", result.EntityId));
                 }

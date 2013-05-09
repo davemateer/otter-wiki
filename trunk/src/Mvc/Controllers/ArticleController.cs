@@ -60,6 +60,15 @@
                 model = Mapper.Map<ArticleReadModel>(article);
             }
 
+            if (!string.IsNullOrEmpty(model.UpdatedBy))
+            {
+                var entity = this.securityRepository.Find(model.UpdatedBy, SecurityEntityTypes.User);
+                if (entity != null)
+                {
+                    model.UpdatedByDisplayName = entity.Name;
+                }
+            }
+
             return View(model);
         }
 
@@ -184,19 +193,19 @@
 
                         try
                         {
-                            var found = securityRepository.Find(entity);
+                            var found = securityRepository.Find(entity, SecurityEntityTypes.Any);
                             if (found == null)
                             {
                                 modelState.AddModelError("Security", "TODO - not found");
                             }
 
-                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
                             {
                                 security.Add(new ArticleSecurity()
                                 {
                                     EntityId = found.EntityId,
                                     Permission = ArticleSecurity.PermissionModify,
-                                    Scope = found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
+                                    Scope = found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
                                 });
                             }
                         }
@@ -247,19 +256,19 @@
 
                         try
                         {
-                            var found = securityRepository.Find(entity);
+                            var found = securityRepository.Find(entity, SecurityEntityTypes.Any);
                             if (found == null)
                             {
                                 modelState.AddModelError("Security", "TODO - not found");
                             }
 
-                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
                             {
                                 security.Add(new ArticleSecurity()
                                 {
                                     EntityId = found.EntityId,
                                     Permission = ArticleSecurity.PermissionView,
-                                    Scope = found.IsGroup ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
+                                    Scope = found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual
                                 });
                             }
                         }

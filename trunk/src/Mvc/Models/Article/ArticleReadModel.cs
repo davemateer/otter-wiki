@@ -1,6 +1,7 @@
 ﻿namespace Otter.Models
 {
     using System;
+    using AutoMapper;
 
     public sealed class ArticleReadModel
     {
@@ -17,5 +18,8 @@
         public DateTime UpdatedDtm { get; set; }
 
         public string UpdatedBy { get; set; }
+
+        [IgnoreMap]
+        public string UpdatedByDisplayName { get; set; }
     }
 }

@@ -1,16 +1,16 @@
 ﻿namespace Otter.Repository
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Web;
-    using Otter.Domain;
-    using System.Text.RegularExpressions;
     using System.DirectoryServices;
     using System.DirectoryServices.AccountManagement;
+    using System.Text.RegularExpressions;
+    using Otter.Domain;
+    using System.Collections.Concurrent;
 
     public sealed class SecurityRepository : ISecurityRepository
     {
+        private readonly static ConcurrentDictionary<string, SecurityEntity> cache = new ConcurrentDictionary<string, SecurityEntity>();
+
         public IEnumerable<SecurityEntity> Search(string query)
         {
             // Safe, but restrictive white-list method of preventing LDAP injection. If other characters are ever needed (accents, etc.),
@@ -31,7 +31,7 @@
                         matches.Add(new SecurityEntity()
                         {
                             EntityId = found.Properties["sAMAccountName"][0].ToString(),
-                            IsGroup = false,
+                            EntityType = SecurityEntityTypes.User,
                             Name = found.Properties["displayName"][0].ToString()
                         });
                     }
@@ -46,7 +46,7 @@
                         matches.Add(new SecurityEntity()
                         {
                             EntityId = found.Properties["cn"][0].ToString(),
-                            IsGroup = true,
+                            EntityType = SecurityEntityTypes.Group,
                             Name = found.Properties["cn"][0].ToString()
                         });
                     }
@@ -56,78 +56,132 @@
             return matches;
         }
 
-        public SecurityEntity Find(string value)
+        public SecurityEntity Find(string value, SecurityEntityTypes option)
         {
-            var groupExpression = new Regex(@"^(?<id>.+) \(Group\)$", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-            var individualExpression = new Regex(@"\[(?<id>[\d\w]+)\]$", RegexOptions.ExplicitCapture);
-
-            var match = groupExpression.Match(value);
-            if (match.Success)
+            SecurityEntity cachedEntity;
+            if (cache.TryGetValue(value, out cachedEntity) && option.HasFlag(cachedEntity.EntityType))
             {
-                using (var searcher = new DirectorySearcher())
+                return cachedEntity;
+            }
+
+            if (option.HasFlag(SecurityEntityTypes.Group))
+            {
+                string query = null;
+                if (option == SecurityEntityTypes.Group)
                 {
-                    searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}))", match.Groups["id"].Value);
-                    SearchResult group = searcher.FindOne();
-
-                    if (group == null)
+                    query = value;
+                }
+                else
+                {
+                    var groupExpression = new Regex(@"^(?<id>.+) \(Group\)$", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
+                    var match = groupExpression.Match(value);
+                    if (match.Success)
                     {
-                        return null;
+                        query = match.Groups["id"].Value;
                     }
+                }
 
-                    return new SecurityEntity()
+                if (!string.IsNullOrEmpty(query))
+                {
+                    using (var searcher = new DirectorySearcher())
                     {
-                        EntityId = match.Groups["id"].Value,
-                        IsGroup = true,
-                        Name = match.Groups["id"].Value
-                    };
+                        searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}))", query);
+                        SearchResult group = searcher.FindOne();
+
+                        if (group == null)
+                        {
+                            return null;
+                        }
+
+                        cachedEntity = new SecurityEntity()
+                        {
+                            EntityId = query,
+                            EntityType = SecurityEntityTypes.Group,
+                            Name = query
+                        };
+                        cache.TryAdd(value, cachedEntity);
+                        return cachedEntity;
+                    }
                 }
             }
 
-            match = individualExpression.Match(value);
-            if (match.Success)
+            if (option.HasFlag(SecurityEntityTypes.User))
             {
-                using (var searcher = new DirectorySearcher())
+                string query = null;
+                if (option == SecurityEntityTypes.User)
                 {
-                    searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", value);
-                    SearchResult user = searcher.FindOne();
-
-                    if (user == null)
+                    query = value;
+                }
+                else
+                {
+                    var individualExpression = new Regex(@"\[(?<id>[\d\w]+)\]$", RegexOptions.ExplicitCapture);
+                    var match = individualExpression.Match(value);
+                    if (match.Success)
                     {
-                        return null;
+                        query = match.Groups["id"].Value;
                     }
-
-                    return new SecurityEntity()
+                }
+                
+                if (!string.IsNullOrEmpty(query))
+                {
+                    using (var searcher = new DirectorySearcher())
                     {
-                        EntityId = match.Groups["id"].Value,
-                        IsGroup = false,
-                        Name = user.Properties["displayName"][0].ToString()
-                    };
+                        searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", query);
+                        SearchResult user = searcher.FindOne();
+
+                        if (user == null)
+                        {
+                            return null;
+                        }
+
+                        cachedEntity = new SecurityEntity()
+                        {
+                            EntityId = query,
+                            EntityType = SecurityEntityTypes.User,
+                            Name = user.Properties["displayName"][0].ToString()
+                        };
+
+                        cache.TryAdd(value, cachedEntity);
+                        return cachedEntity;
+                    }
                 }
             }
 
             // No success the easy way; try the more flexible way.
             using (var context = new PrincipalContext(ContextType.Domain))
             {
-                var identity = Principal.FindByIdentity(context, value);
-                if (identity != null)
+                if (option.HasFlag(SecurityEntityTypes.User))
                 {
-                    return new SecurityEntity()
+                    var identity = Principal.FindByIdentity(context, value);
+                    if (identity != null)
                     {
-                        EntityId = identity.SamAccountName,
-                        IsGroup = false,
-                        Name = identity.DisplayName
-                    };
+                        cachedEntity = new SecurityEntity()
+                        {
+                            EntityId = identity.SamAccountName,
+                            EntityType = SecurityEntityTypes.User,
+                            Name = identity.DisplayName
+                        };
+
+                        cache.TryAdd(value, cachedEntity);
+                        return cachedEntity;
+                    }
                 }
 
-                var group = GroupPrincipal.FindByIdentity(context, value);
-                if (group != null)
+                if (option.HasFlag(SecurityEntityTypes.Group))
                 {
-                    return new SecurityEntity()
+                    var group = GroupPrincipal.FindByIdentity(context, value);
+                    if (group != null)
                     {
-                        EntityId = group.SamAccountName,
-                        IsGroup = true,
-                        Name = group.Name
-                    };
+                        cachedEntity = new SecurityEntity()
+                        {
+                            EntityId = group.SamAccountName,
+                            EntityType = SecurityEntityTypes.Group,
+                            Name = group.Name
+                        };
+
+                        cache.TryAdd(value, cachedEntity);
+                        return cachedEntity;
+                    }
                 }
 
                 return null;

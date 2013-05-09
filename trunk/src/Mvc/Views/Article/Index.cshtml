@@ -13,27 +13,49 @@
   <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-ui-1.10.2.min.js")"></script>
   <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
   <style type="text/css">
+    body {
+      background: #ccc;
+      background-image: -ms-radial-gradient(center, ellipse farthest-corner, #fff 0%, #ccc 110%);
+      background-image: -moz-radial-gradient(center, ellipse farthest-corner, #fff 0%, #ccc 110%);
+      background-image: -o-radial-gradient(center, ellipse farthest-corner, #fff 0%, #ccc 110%);
+      background-image: -webkit-gradient(radial, center center, 0, center center, 506, color-stop(0, #fff), color-stop(1.1, #ccc));
+      background-image: -webkit-radial-gradient(center, ellipse farthest-corner, #fff 0%, #ccc 110%);
+      background-image: radial-gradient(ellipse farthest-corner at center, #fff 0%, #ccc 110%);
+      background-repeat: no-repeat;
+    }
     .index-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      height: 300px;
-      margin-top: -150px;
-      width: 300px;
-      margin-left: -150px;
       text-align: center;
     }
     .add-button {
-      margin-top: 2em;
+      margin: 2em 0;
+    }
+    .product-lead {
+      font-family: Garamond, Serif;
+      font-weight: bold;
+      font-size: 90px;
+    }
+    .product-tag {
+      font-family: Garamond, Serif;
+      font-weight: normal;
+      font-size: 72px;
+    }
+    .search-label {
+      font-size: 1.2em;
+    }
+    #query {
+      font-size: 18px;
+      width: 300px;
     }
   </style>
 </head>
 <body>
   <div class="index-content">
+    <h1><span class="product-lead">Otter</span><span class="product-tag">kb</span></h1>
     @using (Html.BeginForm("Search", "Article", FormMethod.Get))
     {
+      <span class="search-label">Search knowledge base:</span>
       <input type="text" id="query" name="query" />
-      <input type="submit" class="query-submit" value="Search" />
+      <input type="submit" class="query-submit" value="Go" />
     }
     @Html.ActionLink("Create new article", "Create", "Article", null, new { @class = "add-button" })
   </div>
