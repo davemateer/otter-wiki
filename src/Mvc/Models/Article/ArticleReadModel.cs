@@ -1,6 +1,7 @@
 ﻿namespace Otter.Models
 {
     using System;
+    using System.Collections.Generic;
     using AutoMapper;
 
     public sealed class ArticleReadModel
@@ -21,5 +22,8 @@
 
         [IgnoreMap]
         public string UpdatedByDisplayName { get; set; }
+
+        [IgnoreMap]
+        public IEnumerable<string> Tags { get; set; }
     }
 }

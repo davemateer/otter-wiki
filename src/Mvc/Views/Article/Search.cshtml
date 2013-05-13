@@ -1,12 +1,12 @@
 ﻿@model Otter.Models.ArticleSearchModel
 @{
-  ViewBag.Title = string.Format("Search results for \"{0}\"", Model.Query);
+  ViewBag.Title = string.Format(Model.IsTagSearch ? "Articles tagged \"{0}\"" : "Search results for \"{0}\"", Model.Query);
 }
 <h1 class="title">@ViewBag.Title</h1>
 @if (Model.Tags.Any())
 {
   <h2>Tags:</h2>
-  <ul class="search-results-tags">
+  <ul class="tags">
     @foreach (var tag in Model.Tags)
     {
       <li>@Html.ActionLink(tag, "Tagged", new { id = tag })</li>

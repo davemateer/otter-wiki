@@ -114,7 +114,6 @@
     <Compile Include="Infrastructure\NinjectWebCommon.cs" />
     <Compile Include="Infrastructure\RouteConfig.cs" />
     <Compile Include="Infrastructure\Sluggifier.cs" />
-    <Compile Include="Models\Article\ArticleCreateModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryRecord.cs" />
     <Compile Include="Models\Article\ArticleReadModel.cs" />
     <Compile Include="Models\Article\ArticleEditModel.cs" />
@@ -317,7 +316,6 @@
   <ItemGroup>
     <Content Include="packages.config" />
     <None Include="Scripts\jquery-1.9.1.min.map" />
-    <Content Include="Views\Article\Create.cshtml" />
     <Content Include="Views\Article\Read.cshtml" />
     <Content Include="Views\Article\Index.cshtml" />
     <Content Include="Views\Article\Edit.cshtml" />

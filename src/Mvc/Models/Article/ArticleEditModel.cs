@@ -21,6 +21,9 @@
         public string UpdatedBy { get; set; }
 
         [IgnoreMap]
+        public bool IsNewArticle { get; set; }
+
+        [IgnoreMap]
         [Display(Name="Reason for change")]
         public string Comment { get; set; }
 

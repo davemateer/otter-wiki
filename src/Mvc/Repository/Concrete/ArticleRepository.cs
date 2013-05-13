@@ -1,5 +1,6 @@
 ﻿namespace Otter.Repository
 {
+    using System;
     using System.Collections.Generic;
     using System.Configuration;
     using System.Data;
@@ -12,7 +13,6 @@
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository.Abstract;
-    using System;
 
     public sealed class ArticleRepository : IArticleRepository
     {
@@ -47,7 +47,7 @@
             get { return this.context.ArticleTags; }
         }
 
-        public string InsertArticle(string title, string text, IEnumerable<string> tags, string userId)
+        public string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId)
         {
             string urlTitle = Sluggifier.GenerateSlug(title);
             if (urlTitle.Length > 100)
@@ -59,14 +59,13 @@
 
             string html = this.converter.Convert(text);
 
-            var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = connection.CreateCommand();
-
-            connection.Open();
-
-            try
+            using (var scope = new TransactionScope())
             {
-                using (var scope = new TransactionScope())
+                var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+                var cmd = connection.CreateCommand();
+                connection.Open();
+
+                try
                 {
                     cmd.CommandText = "up_Article_Insert";
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -114,18 +113,40 @@
                         cmd.ExecuteNonQuery();
                     }
 
+                    cmd.CommandText = "up_ArticleSecurity_Update";
+                    cmd.Parameters.Clear();
+
+                    parameters = new SqlParameter[4];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Scope", SqlDbType.Char, 1);
+                    parameters[2] = new SqlParameter("@EntityId", SqlDbType.NVarChar, 256);
+                    parameters[3] = new SqlParameter("@Permission", SqlDbType.Char, 1);
+
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var securityRecord in security)
+                    {
+                        cmd.Parameters[1].Value = securityRecord.Scope;
+                        cmd.Parameters[2].Value = securityRecord.EntityId ?? string.Empty;
+                        cmd.Parameters[3].Value = securityRecord.Permission;
+                        cmd.ExecuteNonQuery();
+                    }
+
                     scope.Complete();
                 }
-            }
-            finally
-            {
-                connection.Close();
+                finally
+                {
+                    connection.Close();
+                }
             }
 
             return urlTitle;
         }
 
-        public void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<ArticleSecurity> security, string userId)
+        public void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId)
         {
             // Create diff from current revision. Insert history record.
             string currentText = this.context.Articles.Where(a => a.ArticleId == articleId).Select(a => a.Text).Single();
@@ -134,16 +155,18 @@
             string delta = diff.patch_toText(patches);
 
             // Update existing record.
-            string html = this.converter.Convert(text);
-
-            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = conn.CreateCommand();
-
-            conn.Open();
-            try
+            using (var scope = new TransactionScope())
             {
-                using (var scope = new TransactionScope())
+                string html = this.converter.Convert(text);
+
+                var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+                var cmd = conn.CreateCommand();
+
+                conn.Open();
+                try
                 {
+
+                    // Update main article information.
                     cmd.CommandText = "up_Article_Update";
                     cmd.CommandType = CommandType.StoredProcedure;
 
@@ -177,6 +200,7 @@
 
                     cmd.ExecuteNonQuery();
 
+                    // Update security.
                     cmd.CommandText = "SELECT [Scope], [EntityId] FROM [dbo].[ArticleSecurity] WHERE [ArticleId] = @ArticleId";
                     cmd.CommandType = CommandType.Text;
                     cmd.Parameters.Clear();
@@ -235,12 +259,63 @@
                         cmd.ExecuteNonQuery();
                     }
 
+                    // Update tags.
+                    cmd.CommandText = "SELECT [Tag] FROM [dbo].[ArticleTag] WHERE [ArticleId] = @ArticleId";
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Parameters.Clear();
+                    cmd.Parameters.AddWithValue("@ArticleId", articleId);
+
+                    var existingTags = new List<string>();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            existingTags.Add(reader.GetString(0));
+                        }
+                    }
+
+                    var tagsToDelete = existingTags.Except(tags, StringComparer.CurrentCultureIgnoreCase);
+                    cmd.CommandText = "up_ArticleTag_Delete";
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Clear();
+                    parameters = new SqlParameter[2];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Tag", SqlDbType.NVarChar, 30);
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var tag in tagsToDelete)
+                    {
+                        cmd.Parameters[1].Value = tag;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    var tagsToInsert = tags.Except(existingTags, StringComparer.CurrentCultureIgnoreCase);
+                    cmd.CommandText = "up_ArticleTag_Insert";
+                    cmd.Parameters.Clear();
+
+                    parameters = new SqlParameter[2];
+
+                    parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+                    parameters[0].Value = articleId;
+
+                    parameters[1] = new SqlParameter("@Tag", SqlDbType.NVarChar, 30);
+                    cmd.Parameters.AddRange(parameters);
+
+                    foreach (var tag in tagsToInsert)
+                    {
+                        parameters[1].Value = tag;
+                        cmd.ExecuteNonQuery();
+                    }
+
                     scope.Complete();
                 }
-            }
-            finally
-            {
-                conn.Close();
+                finally
+                {
+                    conn.Close();
+                }
             }
         }
 
@@ -411,7 +486,7 @@
                 else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeIndividual)
                 {
                     viewUsers.Add(token.EntityId);
-                    
+
                     if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
                     {
                         modifyUsers.Add(token.EntityId);

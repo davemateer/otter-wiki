@@ -5,6 +5,8 @@
 
     public sealed class ArticleSearchModel
     {
+        public bool IsTagSearch { get; set; }
+
         public string Query { get; set; }
 
         public IEnumerable<string> Tags { get; set; }

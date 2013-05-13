@@ -1,9 +1,9 @@
 ﻿@model Otter.Models.ArticleEditModel
 @{
-  ViewBag.Title = "Edit " + @Model.Title;
+  ViewBag.Title = Model.IsNewArticle ? "Create new article" : Model.Title;
 }
-<h1 class="title">@Model.Title</h1>
-@using (Html.BeginForm("Edit", "Article", FormMethod.Post, new { id = "edit-form" }))
+<h1 class="title">@ViewBag.Title</h1>
+@using (Html.BeginForm(Model.IsNewArticle ? "Create" : "Edit", "Article", FormMethod.Post, new { id = "edit-form" }))
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
@@ -15,16 +15,26 @@
   <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
   <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
-  <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
-  @Html.HiddenFor(m => m.ArticleId)
-  @Html.HiddenFor(m => m.UpdatedBy)
-  @Html.HiddenFor(m => m.UpdatedDtm)
-  @Html.HiddenFor(m => m.Revision)
-  @Html.HiddenFor(m => m.UrlTitle)
+  if (!Model.IsNewArticle)
+  {
+    <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
+    <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
+    @Html.HiddenFor(m => m.ArticleId)
+    @Html.HiddenFor(m => m.UpdatedBy)
+    @Html.HiddenFor(m => m.UpdatedDtm)
+    @Html.HiddenFor(m => m.Revision)
+    @Html.HiddenFor(m => m.UrlTitle)
+  }
   <div class="edit-actions">
-    <input type="submit" value="Save changes" class="submit-button" />
-    @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
+    <input type="submit" value="@(Model.IsNewArticle ? "Save" : "Save changes")" class="submit-button" />
+    @if (Model.IsNewArticle)
+    {
+      @Html.ActionLink("Cancel", "Index", null, new { @class = "cancel-button" })
+    }
+    else
+    {
+      @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
+    }
   </div>
 }
 @section head
