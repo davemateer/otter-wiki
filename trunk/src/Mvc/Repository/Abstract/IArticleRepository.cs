@@ -15,9 +15,9 @@
 
         IQueryable<ArticleTag> ArticleTags { get; }
 
-        string InsertArticle(string title, string text, IEnumerable<string> tags, string userId);
+        string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
 
-        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<ArticleSecurity> security, string userId);
+        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
 
         string GetRevisionHtml(int articleId, int revision);
 

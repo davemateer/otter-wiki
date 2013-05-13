@@ -3,15 +3,14 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.DirectoryServices.AccountManagement;
     using System.Linq;
     using System.Web.Mvc;
     using AutoMapper;
+    using Otter.Domain;
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
-    using Otter.Domain;
-    using System.Text.RegularExpressions;
-    using System.DirectoryServices.AccountManagement;
 
     public class ArticleController : Controller
     {
@@ -69,28 +68,36 @@
                 }
             }
 
+            model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
+
             return View(model);
         }
 
         [HttpGet]
         public ActionResult Create()
         {
-            var model = new ArticleCreateModel();
-            return View(model);
+            var model = new ArticleEditModel()
+            {
+                Security = new PermissionModel(),
+                IsNewArticle = true,
+            };
+
+            return View("Edit", model);
         }
 
         [HttpPost]
         [ValidateInput(false)]
-        public ActionResult Create(ArticleCreateModel model)
+        public ActionResult Create(ArticleEditModel model)
         {
-            if (!this.ModelState.IsValid)
-            {
-                return this.View(model);
-            }
-
+            List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
             List<string> tags = SplitTags(model.Tags);
 
-            string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            if (!this.ModelState.IsValid)
+            {
+                return this.View("Edit", model);
+            }
+
+            string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             return RedirectToAction("Read", new { id = title });
         }
 
@@ -109,7 +116,7 @@
             foreach (var tag in values)
             {
                 string canonical = tag.Trim();  // Could do more: lowercase, remove accents, replace spaces with dashes, etc.
-                if (!tags.Contains(canonical))
+                if (!string.IsNullOrEmpty(canonical) && !tags.Contains(canonical))
                 {
                     tags.Add(canonical);
                 }
@@ -140,6 +147,7 @@
         [ValidateInput(false)]
         public ActionResult Edit(ArticleEditModel model)
         {
+            List<string> tags = SplitTags(model.Tags);
             List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
 
             if (!this.ModelState.IsValid)
@@ -149,7 +157,7 @@
 
             // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
 
-            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             return RedirectToAction("Read", new { id = model.UrlTitle });
         }
 
@@ -350,6 +358,38 @@
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Tagged(string id)
+        {
+            var query = from a in this.articleRepository.Articles
+                        join t in this.articleRepository.ArticleTags on a.ArticleId equals t.ArticleId
+                        where t.Tag == id
+                        orderby a.Title ascending
+                        select a;
+
+            var model = new ArticleSearchModel()
+            {
+                Articles = Mapper.Map<Article[], ArticleSearchResult[]>(query.ToArray()),
+                IsTagSearch = true,
+                Query = id,
+                Tags = new string[0]
+            };
+
+            foreach (var article in model.Articles)
+            {
+                if (!string.IsNullOrEmpty(article.UpdatedBy))
+                {
+                    var entity = this.securityRepository.Find(article.UpdatedBy, SecurityEntityTypes.User);
+                    if (entity != null)
+                    {
+                        article.UpdatedByDisplayName = entity.Name;
+                    }
+                }
+            }
+
+            return View("Search", model);
         }
     }
 }

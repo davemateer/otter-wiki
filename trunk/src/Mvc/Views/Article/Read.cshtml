@@ -6,7 +6,16 @@
   @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle }, new { @class = "edit-button" })
   @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "history-button" })
 </div>
-<h1 class="title">@ViewBag.Title</h1>
+<h1 class="title@{if (Model.Tags.Any()) {<text> with-tags</text>}}">@ViewBag.Title</h1>
+@if (Model.Tags.Any())
+{
+  <ul class="tags article-tags">
+    @foreach (var tag in Model.Tags)
+    {
+      <li>@Html.ActionLink(tag, "Tagged", new { id = tag })</li>
+    }
+  </ul>
+}
 <div class="content">
   @Html.Raw(Model.Html)
 </div>

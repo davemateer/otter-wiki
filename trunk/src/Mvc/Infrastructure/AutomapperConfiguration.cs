@@ -11,6 +11,7 @@
             Mapper.CreateMap<Article, ArticleReadModel>();
             Mapper.CreateMap<Article, ArticleEditModel>();
             Mapper.CreateMap<Article, ArticleHistoryModel>();
+            Mapper.CreateMap<Article, ArticleSearchResult>();
 
             Mapper.CreateMap<ArticleHistory, ArticleReadModel>()
                 .ForMember(m => m.UrlTitle, opt => opt.Ignore())
