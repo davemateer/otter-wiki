@@ -156,3 +156,13 @@ table.security td {
   background-position: right center;
   background-repeat: no-repeat;
 }
+blockquote {
+  border-style: solid;
+  border-color: #666;
+  border-width: 1px 1px 1px 4px;
+  background-color: #f9f9f9;
+  margin-left: 1em;
+  margin-right: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
+}
