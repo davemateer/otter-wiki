@@ -1,21 +1,20 @@
 ﻿namespace Otter.Repository
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Configuration;
     using System.Data;
     using System.Data.SqlClient;
-    using System.DirectoryServices;
+    using System.Diagnostics;
     using System.Linq;
+    using System.Security.Principal;
     using System.Transactions;
     using DiffMatchPatch;
     using Otter.Domain;
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository.Abstract;
-    using System.Collections.Concurrent;
-    using System.Security.Principal;
-    using System.Diagnostics;
 
     public sealed class ArticleRepository : IArticleRepository
     {
@@ -215,8 +214,10 @@
                     {
                         while (reader.Read())
                         {
-                            if (!security.Any(s => s.EntityId == reader.GetString(1) && s.Scope == reader.GetString(0)))
+                            // Is this current entity part of the new security records?
+                            if (!security.Any(s => (s.EntityId ?? string.Empty) == reader.GetString(1) && s.Scope == reader.GetString(0)))
                             {
+                                // If not, remove it from the database.
                                 recordsToDelete.Add(Tuple.Create(reader.GetString(0), reader.GetString(1)));
                             }
                         }
@@ -518,53 +519,10 @@
                 modifyUsers.Clear();
             }
 
-            viewUsers.RemoveAll(s => string.IsNullOrEmpty(s));
-            viewGroups.RemoveAll(s => string.IsNullOrEmpty(s));
-            modifyUsers.RemoveAll(s => string.IsNullOrEmpty(s));
-            modifyGroups.RemoveAll(s => string.IsNullOrEmpty(s));
-
-            using (var searcher = new DirectorySearcher())
-            {
-                for (int i = 0; i < viewUsers.Count; i++)
-                {
-                    searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", viewUsers[i]);
-                    SearchResult result = searcher.FindOne();
-                    if (result != null)
-                    {
-                        viewUsers[i] = string.Format("{0} [{1}]", result.Properties["displayName"][0], result.Properties["sAMAccountName"][0]);
-                    }
-                }
-
-                for (int i = 0; i < modifyUsers.Count; i++)
-                {
-                    searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(sAMAccountName={0}))", modifyUsers[i]);
-                    SearchResult result = searcher.FindOne();
-                    if (result != null)
-                    {
-                        modifyUsers[i] = string.Format("{0} [{1}]", result.Properties["displayName"][0], result.Properties["sAMAccountName"][0]);
-                    }
-                }
-
-                for (int i = 0; i < viewGroups.Count; i++)
-                {
-                    searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}*))", viewGroups[i]);
-                    SearchResult result = searcher.FindOne();
-                    if (result != null)
-                    {
-                        viewGroups[i] = string.Format("{0} (Group)", result.Properties["cn"][0]);
-                    }
-                }
-
-                for (int i = 0; i < modifyGroups.Count; i++)
-                {
-                    searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}*))", modifyGroups[i]);
-                    SearchResult result = searcher.FindOne();
-                    if (result != null)
-                    {
-                        modifyGroups[i] = string.Format("{0} (Group)", result.Properties["cn"][0]);
-                    }
-                }
-            }
+            this.StandardizeAccounts(viewUsers, SecurityEntityTypes.User);
+            this.StandardizeAccounts(viewGroups, SecurityEntityTypes.Group);
+            this.StandardizeAccounts(modifyUsers, SecurityEntityTypes.User);
+            this.StandardizeAccounts(modifyGroups, SecurityEntityTypes.Group);
 
             viewUsers.AddRange(viewGroups);
             viewUsers.Sort();
@@ -648,6 +606,20 @@
 
             Debug.Fail("Invalid scope : " + scope);
             return int.MaxValue;
+        }
+
+        private void StandardizeAccounts(List<string> accounts, SecurityEntityTypes type)
+        {
+            accounts.RemoveAll(s => string.IsNullOrEmpty(s));
+
+            for (int i = 0; i < accounts.Count; i++)
+            {
+                SecurityEntity entity = this.securityRepository.Find(accounts[i], type);
+                if (entity != null)
+                {
+                    accounts[i] = entity.ToString();
+                }
+            }
         }
     }
 }

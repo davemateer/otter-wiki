@@ -6,8 +6,6 @@
     using System.DirectoryServices.AccountManagement;
     using System.Text.RegularExpressions;
     using Otter.Domain;
-    using System;
-    using System.Security.Principal;
 
     public sealed class SecurityRepository : ISecurityRepository
     {
@@ -31,12 +29,7 @@
                 {
                     foreach (SearchResult found in results)
                     {
-                        matches.Add(new SecurityEntity()
-                        {
-                            EntityId = found.Properties["sAMAccountName"][0].ToString(),
-                            EntityType = SecurityEntityTypes.User,
-                            Name = found.Properties["displayName"][0].ToString()
-                        });
+                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.User));
                     }
                 }
 
@@ -46,12 +39,7 @@
                 {
                     foreach (SearchResult found in results)
                     {
-                        matches.Add(new SecurityEntity()
-                        {
-                            EntityId = found.Properties["sAMAccountName"][0].ToString(),
-                            EntityType = SecurityEntityTypes.Group,
-                            Name = found.Properties["displayName"][0].ToString()
-                        });
+                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.Group));
                     }
                 }
             }
@@ -81,12 +69,10 @@
                 }
                 else
                 {
-                    // If not, we parse the parameter to see if it matches our expected format for a group.
-                    var groupExpression = new Regex(@"^(?<id>.+) \(Group\)$", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
-                    var match = groupExpression.Match(value);
-                    if (match.Success)
+                    SecurityEntity entity;
+                    if (SecurityEntity.TryParse(value, out entity) && entity.EntityType == SecurityEntityTypes.Group)
                     {
-                        query = match.Groups["id"].Value;
+                        query = entity.EntityId;
                     }
                 }
 
@@ -94,7 +80,7 @@
                 {
                     using (var searcher = new DirectorySearcher())
                     {
-                        searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}))", query);
+                        searcher.Filter = string.Format("(&(objectCategory=group)(sAMAccountName={0}))", query);
                         SearchResult group = searcher.FindOne();
 
                         if (group == null)
@@ -102,13 +88,7 @@
                             return null;
                         }
 
-                        cachedEntity = new SecurityEntity()
-                        {
-                            EntityId = query,
-                            EntityType = SecurityEntityTypes.Group,
-                            Name = query
-                        };
-
+                        cachedEntity = SecurityEntity.FromSearchResult(group, SecurityEntityTypes.Group);
                         ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
@@ -118,17 +98,18 @@
             if (option.HasFlag(SecurityEntityTypes.User))
             {
                 string query = null;
+
+                // If we are searching only for a user, the exact user id is expected to be the parameter value.
                 if (option == SecurityEntityTypes.User)
                 {
                     query = value;
                 }
                 else
                 {
-                    var individualExpression = new Regex(@"\[(?<id>[\d\w]+)\]$", RegexOptions.ExplicitCapture);
-                    var match = individualExpression.Match(value);
-                    if (match.Success)
+                    SecurityEntity entity;
+                    if (SecurityEntity.TryParse(value, out entity) && entity.EntityType == SecurityEntityTypes.User)
                     {
-                        query = match.Groups["id"].Value;
+                        query = entity.EntityId;
                     }
                 }
                 
@@ -144,13 +125,7 @@
                             return null;
                         }
 
-                        cachedEntity = new SecurityEntity()
-                        {
-                            EntityId = query,
-                            EntityType = SecurityEntityTypes.User,
-                            Name = user.Properties["displayName"][0].ToString()
-                        };
-
+                        cachedEntity = SecurityEntity.FromSearchResult(user, SecurityEntityTypes.User);
                         ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
