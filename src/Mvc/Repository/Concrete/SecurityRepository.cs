@@ -1,15 +1,18 @@
 ﻿namespace Otter.Repository
 {
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.DirectoryServices;
     using System.DirectoryServices.AccountManagement;
     using System.Text.RegularExpressions;
     using Otter.Domain;
-    using System.Collections.Concurrent;
+    using System;
+    using System.Security.Principal;
 
     public sealed class SecurityRepository : ISecurityRepository
     {
-        private readonly static ConcurrentDictionary<string, SecurityEntity> cache = new ConcurrentDictionary<string, SecurityEntity>();
+        // Using ConcurrentDictionary because a new instance is created per request, but we are sharing this dictionary across instances.
+        private readonly static ConcurrentDictionary<string, SecurityEntity> ldapCache = new ConcurrentDictionary<string, SecurityEntity>();
 
         public IEnumerable<SecurityEntity> Search(string query)
         {
@@ -37,7 +40,7 @@
                     }
                 }
 
-                searcher.Filter = string.Format("(&(objectCategory=group)(cn={0}*))", query);
+                searcher.Filter = string.Format("(&(objectCategory=group)(|(cn={0}*)(displayName={0}*)(sAMAccountName={0}*)))", query);
 
                 using (SearchResultCollection results = searcher.FindAll())
                 {
@@ -45,9 +48,9 @@
                     {
                         matches.Add(new SecurityEntity()
                         {
-                            EntityId = found.Properties["cn"][0].ToString(),
+                            EntityId = found.Properties["sAMAccountName"][0].ToString(),
                             EntityType = SecurityEntityTypes.Group,
-                            Name = found.Properties["cn"][0].ToString()
+                            Name = found.Properties["displayName"][0].ToString()
                         });
                     }
                 }
@@ -58,21 +61,27 @@
 
         public SecurityEntity Find(string value, SecurityEntityTypes option)
         {
+            // Is there already a value in the cache?
             SecurityEntity cachedEntity;
-            if (cache.TryGetValue(value, out cachedEntity) && option.HasFlag(cachedEntity.EntityType))
+            if (ldapCache.TryGetValue(value, out cachedEntity) && option.HasFlag(cachedEntity.EntityType))
             {
+                // Return the cached value.
                 return cachedEntity;
             }
 
+            // Nothing was matched in the cache. Search for a matching group.
             if (option.HasFlag(SecurityEntityTypes.Group))
             {
                 string query = null;
+
+                // If we are searching only for a group, the exact group id is expected to be the parameter value.
                 if (option == SecurityEntityTypes.Group)
                 {
                     query = value;
                 }
                 else
                 {
+                    // If not, we parse the parameter to see if it matches our expected format for a group.
                     var groupExpression = new Regex(@"^(?<id>.+) \(Group\)$", RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase);
                     var match = groupExpression.Match(value);
                     if (match.Success)
@@ -99,7 +108,8 @@
                             EntityType = SecurityEntityTypes.Group,
                             Name = query
                         };
-                        cache.TryAdd(value, cachedEntity);
+
+                        ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -141,7 +151,7 @@
                             Name = user.Properties["displayName"][0].ToString()
                         };
 
-                        cache.TryAdd(value, cachedEntity);
+                        ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -162,7 +172,7 @@
                             Name = identity.DisplayName
                         };
 
-                        cache.TryAdd(value, cachedEntity);
+                        ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -176,10 +186,10 @@
                         {
                             EntityId = group.SamAccountName,
                             EntityType = SecurityEntityTypes.Group,
-                            Name = group.Name
+                            Name = group.DisplayName
                         };
 
-                        cache.TryAdd(value, cachedEntity);
+                        ldapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
