@@ -40,6 +40,11 @@
                 return HttpNotFound();
             }
 
+            if (!this.articleRepository.CanView(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             ArticleReadModel model = null;
 
             if (revision.HasValue && revision.Value != article.Revision)
@@ -134,6 +139,11 @@
                 return HttpNotFound();
             }
 
+            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             var model = Mapper.Map<ArticleEditModel>(article);
             model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
 
@@ -147,6 +157,11 @@
         [ValidateInput(false)]
         public ActionResult Edit(ArticleEditModel model)
         {
+            if (!this.articleRepository.CanModify(this.User, model.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             List<string> tags = SplitTags(model.Tags);
             List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
 
@@ -303,6 +318,11 @@
                 return HttpNotFound();
             }
 
+            if (!this.articleRepository.CanView(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             var model = Mapper.Map<ArticleHistoryModel>(article);
             model.HistoryRecords = from a in this.articleRepository.Articles
                                    join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
@@ -334,6 +354,11 @@
                 return HttpNotFound();
             }
 
+            if (!this.articleRepository.CanView(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             string textFrom = null;
             string textTo = null;
 
@@ -357,6 +382,8 @@
                 Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct()
             };
 
+            // TODO: remove items where the user does not have read permissions.
+
             return View(model);
         }
 
@@ -368,6 +395,8 @@
                         where t.Tag == id
                         orderby a.Title ascending
                         select a;
+
+            // TODO: remove items where the user does not have read permissions.
 
             var model = new ArticleSearchModel()
             {

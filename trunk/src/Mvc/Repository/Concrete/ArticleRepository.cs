@@ -13,12 +13,16 @@
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository.Abstract;
+    using System.Collections.Concurrent;
+    using System.Security.Principal;
+    using System.Diagnostics;
 
     public sealed class ArticleRepository : IArticleRepository
     {
         private readonly IApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
         private readonly ISecurityRepository securityRepository;
+        private readonly static ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> articleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
@@ -153,6 +157,7 @@
             var diff = new diff_match_patch();
             List<Patch> patches = diff.patch_make(text, currentText);
             string delta = diff.patch_toText(patches);
+            bool invalidateSecurityCache = false;
 
             // Update existing record.
             using (var scope = new TransactionScope())
@@ -165,7 +170,6 @@
                 conn.Open();
                 try
                 {
-
                     // Update main article information.
                     cmd.CommandText = "up_Article_Update";
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -235,6 +239,7 @@
                         cmd.Parameters[1].Value = record.Item1;
                         cmd.Parameters[2].Value = record.Item2;
                         cmd.ExecuteNonQuery();
+                        invalidateSecurityCache = true;
                     }
 
                     cmd.CommandText = "up_ArticleSecurity_Update";
@@ -257,6 +262,7 @@
                         cmd.Parameters[2].Value = securityRecord.EntityId ?? string.Empty;
                         cmd.Parameters[3].Value = securityRecord.Permission;
                         cmd.ExecuteNonQuery();
+                        invalidateSecurityCache = true;
                     }
 
                     // Update tags.
@@ -315,6 +321,12 @@
                 finally
                 {
                     conn.Close();
+                }
+
+                if (invalidateSecurityCache)
+                {
+                    IEnumerable<ArticleSecurity> dummy;
+                    articleSecurityCache.TryRemove(articleId, out dummy);
                 }
             }
         }
@@ -561,6 +573,81 @@
             modifyUsers.AddRange(modifyGroups);
             modifyUsers.Sort();
             model.ModifyAccounts = string.Join("; ", modifyUsers);
+        }
+
+        public bool CanView(IPrincipal user, int articleId)
+        {
+            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
+
+            IEnumerable<ArticleSecurity> security = GetSecurityRecords(articleId);
+
+            foreach (var record in security)
+            {
+                if (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
+                    (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
+                    (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool CanModify(IPrincipal user, int articleId)
+        {
+            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
+
+            IEnumerable<ArticleSecurity> security = GetSecurityRecords(articleId);
+
+            foreach (var record in security)
+            {
+                if (record.Permission == Domain.ArticleSecurity.PermissionModify &&
+                    (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
+                     (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
+                     (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId))))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId)
+        {
+            IEnumerable<ArticleSecurity> security;
+            if (!articleSecurityCache.TryGetValue(articleId, out security))
+            {
+                List<ArticleSecurity> temp = this.ArticleSecurity.Where(s => s.ArticleId == articleId).ToList();
+                temp.Sort((s1, s2) => GetScopeOrder(s1.Scope).CompareTo(GetScopeOrder(s2.Scope)));
+                articleSecurityCache.TryAdd(articleId, temp);
+                security = temp;
+            }
+
+            return security;
+        }
+
+        private static int GetScopeOrder(string scope)
+        {
+            // Minor effeciency; sort items in the records in the order from least to most expensive to process.
+            if (scope == Domain.ArticleSecurity.ScopeEveryone)
+            {
+                return 0;
+            }
+
+            if (scope == Domain.ArticleSecurity.ScopeIndividual)
+            {
+                return 1;
+            }
+
+            if (scope == Domain.ArticleSecurity.ScopeGroup)
+            {
+                return 2;
+            }
+
+            Debug.Fail("Invalid scope : " + scope);
+            return int.MaxValue;
         }
     }
 }

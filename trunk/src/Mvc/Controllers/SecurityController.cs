@@ -1,11 +1,9 @@
 ﻿namespace Otter.Controllers
 {
     using System.Collections.Generic;
-    using System.DirectoryServices;
-    using System.Text.RegularExpressions;
     using System.Web.Mvc;
-    using Otter.Repository;
     using Otter.Domain;
+    using Otter.Repository;
 
     public sealed class SecurityController : Controller
     {
