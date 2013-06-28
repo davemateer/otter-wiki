@@ -54,7 +54,7 @@
   <script type="text/javascript">
     $(document).ready(function () {
       $('#edit-form').submit(function () {
-        if ($('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without specifying a reason for the change?')) {
+        if ($('#Comment').length > 0 && $('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without specifying a reason for the change?')) {
           return false;
         }
       });

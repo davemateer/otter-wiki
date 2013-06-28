@@ -221,8 +221,7 @@
                             {
                                 modelState.AddModelError("Security", "TODO - not found");
                             }
-
-                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            else if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
                             {
                                 security.Add(new ArticleSecurity()
                                 {
@@ -284,8 +283,7 @@
                             {
                                 modelState.AddModelError("Security", "TODO - not found");
                             }
-
-                            if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
+                            else if (!security.Any(s => s.EntityId == found.EntityId && s.Scope == (found.EntityType == SecurityEntityTypes.Group ? ArticleSecurity.ScopeGroup : ArticleSecurity.ScopeIndividual)))
                             {
                                 security.Add(new ArticleSecurity()
                                 {

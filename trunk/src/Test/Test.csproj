@@ -96,6 +96,7 @@
     <Compile Include="ArticleControllerTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Infrastructure\SluggifierTest.cs" />
+    <Compile Include="Domain\SecurityEntityTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Mvc\Mvc.csproj">
