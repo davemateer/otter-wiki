@@ -5,6 +5,7 @@
     using Otter.Domain;
     using Otter.Models;
     using System.Security.Principal;
+    using System;
 
     public interface IArticleRepository
     {
@@ -22,7 +23,11 @@
 
         string GetRevisionHtml(int articleId, int revision);
 
-        IEnumerable<ArticleSearchResult> Search(string query, string userId);
+        IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
+
+        IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity);
+
+        IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity);
 
         void HydratePermissionModel(PermissionModel model, int articleId, string userId);
 

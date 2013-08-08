@@ -1,6 +1,6 @@
 ﻿@model Otter.Models.ArticleSearchModel
 @{
-  ViewBag.Title = string.Format(Model.IsTagSearch ? "Articles tagged \"{0}\"" : "Search results for \"{0}\"", Model.Query);
+  ViewBag.Title = string.Format(Model.IsTagSearch ? (string.IsNullOrEmpty(Model.Query) ? "Untagged articles" : "Articles tagged \"{0}\"") : "Search results for \"{0}\"", Model.Query);
 }
 <h1 class="title">@ViewBag.Title</h1>
 @if (Model.Tags.Any())

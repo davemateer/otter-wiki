@@ -1,0 +1,20 @@
+﻿@model IEnumerable<Otter.Models.ArticleListTagsRecord>
+@{
+  ViewBag.Title = "Articles by tag";
+}
+<h1 class="title">@ViewBag.Title</h1>
+<ul>
+  @foreach (var tag in Model)
+  {
+    <li>
+      @if (string.IsNullOrEmpty(tag.Tag))
+      {
+        @Html.ActionLink("(Untagged)", "Untagged");
+      }
+      else
+      {
+        @Html.ActionLink(tag.Tag, "Tagged", new { id = tag.Tag })
+      }
+      (@tag.Count.ToString("N0"))</li>
+  }
+</ul>
