@@ -23,6 +23,12 @@
     }
   });
 
+  $('.list-button').button({
+    icons: {
+      primary: "ui-icon-tag"
+    }
+  });
+
   $('input.query-submit, input.submit-button').button();
 
   $('input.permission-option').change(function () {

@@ -22,6 +22,7 @@
         private readonly ITextToHtmlConverter converter;
         private readonly ISecurityRepository securityRepository;
         private readonly static ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> articleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
+        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["Domain"];
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
@@ -385,22 +386,26 @@
             return this.converter.Convert(text);
         }
 
-        public IEnumerable<ArticleSearchResult> Search(string query, string userId)
+        public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)
         {
             var results = new List<ArticleSearchResult>();
 
             var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = conn.CreateCommand();
-            cmd.CommandText = "up_Article_Search";
+            cmd.CommandText = "up_Article_SearchByQuery";
             cmd.CommandType = CommandType.StoredProcedure;
 
-            SqlParameter[] parameters = new SqlParameter[2];
+            SqlParameter[] parameters = new SqlParameter[3];
 
             parameters[0] = new SqlParameter("@Query", SqlDbType.NVarChar, 1000);
             parameters[0].Value = query;
 
-            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 50);
-            parameters[1].Value = userId;
+            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[2].TypeName = "dbo.SecurityEntityTable";
+            parameters[2].Value = this.GetGroupParameter(identity);
 
             cmd.Parameters.AddRange(parameters);
 
@@ -432,6 +437,76 @@
                 conn.Close();
             }
 
+            this.GetDisplayNames(results);
+
+            return results;
+        }
+
+        public IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity)
+        {
+            var results = new List<ArticleSearchResult>();
+
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_SearchByTag";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[3];
+
+            parameters[0] = new SqlParameter("@Tag", SqlDbType.NVarChar, 30);
+            if (string.IsNullOrEmpty(tag))
+            {
+                parameters[0].Value = DBNull.Value;
+            }
+            else
+            {
+                parameters[0].Value = tag;
+            }
+
+            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[2].TypeName = "dbo.SecurityEntityTable";
+            parameters[2].Value = this.GetGroupParameter(identity);
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
+                    int titleOrdinal = reader.GetOrdinal("Title");
+                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
+                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+
+                    while (reader.Read())
+                    {
+                        results.Add(new ArticleSearchResult()
+                        {
+                            Title = reader.GetString(titleOrdinal),
+                            UpdatedBy = reader.GetString(updatedByOrdinal),
+                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UrlTitle = reader.GetString(urlTitleOrdinal)
+                        });
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            this.GetDisplayNames(results);
+
+            return results;
+        }
+
+        private void GetDisplayNames(List<ArticleSearchResult> results)
+        {
             results.ForEach(delegate(ArticleSearchResult sr)
             {
                 if (!string.IsNullOrEmpty(sr.UpdatedBy))
@@ -443,8 +518,6 @@
                     }
                 }
             });
-
-            return results;
         }
 
         public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
@@ -620,6 +693,72 @@
                     accounts[i] = entity.ToString();
                 }
             }
+        }
+
+        public IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity)
+        {
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_GetSummaryByTag";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[2];
+
+            parameters[0] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[0].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[1] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[1].TypeName = "dbo.SecurityEntityTable";
+            parameters[1].Value = this.GetGroupParameter(identity);
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    var tags = new List<Tuple<string, int>>();
+
+                    int tagOrdinal = reader.GetOrdinal("Tag");
+                    int countOrdinal = reader.GetOrdinal("CountOfArticles");
+
+                    while (reader.Read())
+                    {
+                        tags.Add(Tuple.Create(reader.IsDBNull(tagOrdinal) ? string.Empty : reader.GetString(tagOrdinal), reader.GetInt32(countOrdinal)));
+                    }
+
+                    return tags;
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        private object GetGroupParameter(IIdentity identity)
+        {
+            var windowsIdentity = identity as WindowsIdentity;
+
+            if (windowsIdentity == null)
+            {
+                return DBNull.Value;
+            }
+
+            DataTable groups = new DataTable();
+            groups.Columns.Add("EntityId", typeof(string));
+
+            foreach (var g in windowsIdentity.Groups.Translate(typeof(NTAccount)))
+            {
+                if (g.Value.StartsWith(string.Format("{0}\\", SecurityDomain)))
+                {
+                    groups.Rows.Add(this.securityRepository.StandardizeUserId(g.Value));
+                }
+            }
+
+            return groups;
         }
     }
 }

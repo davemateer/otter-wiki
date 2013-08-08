@@ -32,6 +32,14 @@
         }
 
         [HttpGet]
+        public ActionResult ListTags()
+        {
+            var articles = this.articleRepository.GetTagSummary(this.User.Identity);
+            var model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
+            return View(model);
+        }
+
+        [HttpGet]
         public ActionResult Read(string id, int? revision)
         {
             var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
@@ -357,8 +365,8 @@
                 return new HttpUnauthorizedResult();
             }
 
-            string textFrom = null;
-            string textTo = null;
+            //string textFrom = null;
+            //string textTo = null;
 
             return HttpNotFound();
         }
@@ -375,7 +383,7 @@
         {
             var model = new ArticleSearchModel()
             {
-                Articles = this.articleRepository.Search(query, this.securityRepository.StandardizeUserId(this.User.Identity.Name)),
+                Articles = this.articleRepository.SearchByQuery(query, this.User.Identity),
                 Query = query,
                 Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct()
             };
@@ -388,33 +396,31 @@
         [HttpGet]
         public ActionResult Tagged(string id)
         {
-            var query = from a in this.articleRepository.Articles
-                        join t in this.articleRepository.ArticleTags on a.ArticleId equals t.ArticleId
-                        where t.Tag == id
-                        orderby a.Title ascending
-                        select a;
-
-            // TODO: remove items where the user does not have read permissions.
+            var results = this.articleRepository.SearchByTag(id, this.User.Identity).OrderBy(a => a.Title);
 
             var model = new ArticleSearchModel()
             {
-                Articles = Mapper.Map<Article[], ArticleSearchResult[]>(query.ToArray()),
+                Articles = results,
                 IsTagSearch = true,
                 Query = id,
                 Tags = new string[0]
             };
 
-            foreach (var article in model.Articles)
+            return View("Search", model);
+        }
+
+        [HttpGet]
+        public ActionResult Untagged()
+        {
+            var results = this.articleRepository.SearchByTag(null, this.User.Identity).OrderBy(a => a.Title);
+
+            var model = new ArticleSearchModel()
             {
-                if (!string.IsNullOrEmpty(article.UpdatedBy))
-                {
-                    var entity = this.securityRepository.Find(article.UpdatedBy, SecurityEntityTypes.User);
-                    if (entity != null)
-                    {
-                        article.UpdatedByDisplayName = entity.Name;
-                    }
-                }
-            }
+                Articles = results,
+                IsTagSearch = true,
+                Query = string.Empty,
+                Tags = new string[0]
+            };
 
             return View("Search", model);
         }
