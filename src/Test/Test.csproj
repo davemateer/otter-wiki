@@ -98,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArticleControllerTest.cs" />
+    <Compile Include="Infrastructure\MarkdownConverterTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Infrastructure\SluggifierTest.cs" />
     <Compile Include="Domain\SecurityEntityTest.cs" />

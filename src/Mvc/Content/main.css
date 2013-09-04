@@ -166,3 +166,10 @@ blockquote {
   padding-left: 1em;
   padding-right: 1em;
 }
+table.content-table td, table.content-table th {
+  border: 1px solid #ccc;
+  padding: 2px 6px;
+}
+table.content-table th {
+  background-color: #eee;
+}
