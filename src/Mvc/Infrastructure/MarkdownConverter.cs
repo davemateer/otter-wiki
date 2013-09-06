@@ -4,13 +4,11 @@ namespace Otter.Infrastructure
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Web;
-    using MarkdownSharp;
-    using HtmlAgilityPack;
-    using System.Text.RegularExpressions;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Xml;
-    using System.Diagnostics;
+    using HtmlAgilityPack;
+    using MarkdownSharp;
 
     public sealed class MarkdownConverter : ITextToHtmlConverter
     {
@@ -52,7 +50,7 @@ namespace Otter.Infrastructure
         public string Convert(string plainText)
         {
             var markdown = new Markdown();
-            string html = Regex.Replace(plainText, @"^\s*\{\|.*\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
+            string html = Regex.Replace(plainText, @"^\s*\{\|.*?\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
             html = markdown.Transform(html);
             html = Purify(html);
             return html;
@@ -79,7 +77,6 @@ namespace Otter.Infrastructure
 
                 if (trimmed.StartsWith("{|", StringComparison.OrdinalIgnoreCase))
                 {
-                    Debug.Assert(context.Count == 0, "context.Count == 0");
                     if (context.Count > 0)
                     {
                         return match.Value;
@@ -96,8 +93,7 @@ namespace Otter.Infrastructure
                         currentRowColumnCount++;
                     }
 
-                    Debug.Assert(context.Peek() == "tr", "context.Peek() == \"tr\"");
-                    if (context.Peek() != "tr")
+                    if (context.Count == 0 || context.Peek() != "tr")
                     {
                         return match.Value;
                     }
@@ -110,8 +106,7 @@ namespace Otter.Infrastructure
                     writer.WriteEndElement();  // tr
                     context.Pop();
 
-                    Debug.Assert(context.Peek() == "tbody", "context.Peek() == \"tbody\"");
-                    if (context.Peek() != "tbody")
+                    if (context.Count == 0 || context.Peek() != "tbody")
                     {
                         return match.Value;
                     }
@@ -119,8 +114,7 @@ namespace Otter.Infrastructure
                     writer.WriteEndElement();  // tbody
                     context.Pop();
 
-                    Debug.Assert(context.Peek() == "table", "context.Peek() == \"table\"");
-                    if (context.Peek() != "table")
+                    if (context.Count == 0 || context.Peek() != "table")
                     {
                         return match.Value;
                     }
@@ -244,8 +238,7 @@ namespace Otter.Infrastructure
                         continue;
                     }
 
-                    Debug.Assert(context.Peek() == "td" || context.Peek() == "th", "context.Peek() == \"td\" || context.Peek() == \"th\"");
-                    if (context.Peek() != "td" && context.Peek() != "th")
+                    if (context.Count == 0 || (context.Peek() != "td" && context.Peek() != "th"))
                     {
                         return match.Value;
                     }
@@ -254,7 +247,6 @@ namespace Otter.Infrastructure
                 }
             }
 
-            Debug.Assert(context.Count == 0, "context.Count == 0");
             if (context.Count > 0)
             {
                 return match.Value;

@@ -68,5 +68,14 @@
             string expected = "<h2>Interface servers</h2>\n\n<table><thead><tr><th>Server</th><th>Purpose</th></tr></thead><tbody><tr><td>IF-HVB-03</td><td>MCAP Dictation Interface</td></tr></tbody></table>";
             Assert.AreEqual(expected, actual);
         }
+
+        [TestMethod]
+        public void Convert_MultipleTables()
+        {
+            var converter = new MarkdownConverter();
+            var actual = converter.Convert("Table 1\n-------\n{|\n| Apple || Fruit\n|}\nTable 2\n-------\n{|\n| Carrot || Vegetable\n|}");
+            string expected = "<h2>Table 1</h2>\n\n<table><tbody><tr><td>Apple</td><td>Fruit</td></tr></tbody></table>\n\n<h2>Table 2</h2>\n\n<table><tbody><tr><td>Carrot</td><td>Vegetable</td></tr></tbody></table>";
+            Assert.AreEqual(expected, actual);
+        }
     }
 }

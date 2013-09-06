@@ -7,23 +7,24 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">
-    Edit the article text using <a href="#">Markdown syntax</a>:</div>
+  <div class="editor-label">Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</div>
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
+  <div class="editor-label">Preview:</div>
+  <div id="Preview" />
   <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
   <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
   if (!Model.IsNewArticle)
   {
-    <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
-    <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
-    @Html.HiddenFor(m => m.ArticleId)
-    @Html.HiddenFor(m => m.UpdatedBy)
-    @Html.HiddenFor(m => m.UpdatedDtm)
-    @Html.HiddenFor(m => m.Revision)
-    @Html.HiddenFor(m => m.UrlTitle)
+  <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
+  <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
+  @Html.HiddenFor(m => m.ArticleId)
+  @Html.HiddenFor(m => m.UpdatedBy)
+  @Html.HiddenFor(m => m.UpdatedDtm)
+  @Html.HiddenFor(m => m.Revision)
+  @Html.HiddenFor(m => m.UrlTitle)
   }
   <div class="edit-actions">
     <input type="submit" value="@(Model.IsNewArticle ? "Save" : "Save changes")" class="submit-button" />
@@ -39,10 +40,11 @@
 }
 @section head
 {
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />
   <style type="text/css">
     textarea#Text {
       width: 100%;
-      height: 300px;
+      height: 250px;
     }
     #Title, #Tags, #Comment {
       width: 450px;
@@ -50,14 +52,65 @@
     div.edit-actions {
       margin-top: 1em;
     }
+    .loading {
+      background-color: #aaa;
+      filter: alpha(opacity=50);
+      -moz-opacity: 0.5;
+      -khtml-opacity: 0.5;
+      opacity: 0.5;
+    }
+    #Preview {
+      border: 2px dashed #ccc;
+      padding: 5px;
+      height: 250px;
+      overflow-y: scroll;
+    }
   </style>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
+
+    var requestId = 0;
+
+    var loadPreview = function () {
+      $.ajax({
+        url: '@Url.Action("Preview")',
+        type: 'POST',
+        data: { 'id': requestId, 'text': $("#Text").val() },
+        success: function (data) {
+          if (data.id == requestId) {
+            $('#Preview').html(data.html);
+            applyContentFormat($('#Preview'));
+            $('#Preview').removeClass('loading');
+          }
+        },
+        dataType: 'json'
+      });
+    }
+
     $(document).ready(function () {
+
       $('#edit-form').submit(function () {
         if ($('#Comment').length > 0 && $('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without specifying a reason for the change?')) {
           return false;
         }
       });
+
+      $("#Text").bind("input propertychange", function (evt) {
+
+        if (window.event && event.type == "propertychange" && event.propertyName != "value") {
+          return;
+        }
+
+        window.clearTimeout($(this).data("timeout"));
+        $('#Preview').addClass('loading');
+        requestId = new Date().getTime();
+
+        $(this).data("timeout", setTimeout(loadPreview, 1000));
+      });
+
+      loadPreview();
+
     });
   </script>
 }

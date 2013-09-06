@@ -173,3 +173,9 @@ table.content-table td, table.content-table th {
 table.content-table th {
   background-color: #eee;
 }
+
+@media print {
+  div#header, .no-print {
+    display: none;
+  }
+}
