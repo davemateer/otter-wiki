@@ -2,7 +2,7 @@
 @{
   ViewBag.Title = Model.Title;
 }
-<div class="actions">
+<div class="actions no-print">
   @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle }, new { @class = "edit-button" })
   @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "history-button" })
 </div>
@@ -23,39 +23,11 @@
 @section head
 {
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />
-  <script src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
-
-    var selectCode = function (elementId) {
-      if (document.body.createTextRange) {
-        var range = document.body.createTextRange();
-        range.moveToElementText(document.getElementById(elementId));
-        range.select();
-      } else if (window.getSelection) {
-        var selection = window.getSelection();
-        var range = document.createRange();
-        range.selectNodeContents(document.getElementById(elementId));
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    };
-
     $(document).ready(function () {
-      $('code').addClass("prettyprint");
-
-      $('pre > code').parent().each(function (index) {
-        $(this).addClass("prettyprint");
-        $(this).attr('id', 'codeblock-' + index);
-        $(this).after($('<a/>', {
-          href: "javascript:selectCode('codeblock-" + index + "')",
-          text: "Select code",
-          "class": "select-all"
-        }))
-      });
-
-      prettyPrint();
-
-      $('div.content table').addClass('content-table');
+      applyContentFormat($('div.content'));
     });
   </script>
 }

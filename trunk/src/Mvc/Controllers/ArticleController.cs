@@ -424,5 +424,16 @@
 
             return View("Search", model);
         }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public ActionResult Preview(string id, string text)
+        {
+            return Json(new
+            {
+                id = id,
+                html = this.htmlConverter.Convert(text)
+            });
+        }
     }
 }
