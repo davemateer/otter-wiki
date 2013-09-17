@@ -7,7 +7,7 @@
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/themes/otter/minified/jquery-ui.min.css")" />
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
   <script type="text/javascript">
-  var SITE_ROOT = '@Url.Content("~/")';
+    var SITE_ROOT = '@Url.Content("~/")';
   </script>
   <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.9.1.min.js")"></script>
   <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-ui-1.10.2.min.js")"></script>
@@ -16,6 +16,7 @@
 </head>
 <body>
   <div id="header">
+    @Html.ActionLink("Home", "Index", "Article", null, new { id = "home-link" })
     @Html.ActionLink("Create new article", "Create", "Article", null, new { id = "add-article-link", @class = "add-button" })
     @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
     {
@@ -24,6 +25,6 @@
     }
   </div>
   @RenderBody()
-  <div id="footer">&nbsp;</div>
+  <div id="footer"><a href="https://code.google.com/p/otter-wiki/">Otter knowledge-base and wiki</a>, version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</div>
 </body>
 </html>

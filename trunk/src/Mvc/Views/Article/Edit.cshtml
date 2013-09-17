@@ -7,11 +7,14 @@
 {
   <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</div>
+  <div class="editor-label">
+    Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</div>
+  @*<div><button id="add-image">Add image</button></div>*@
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
-  <div class="editor-label">Preview:</div>
-  <div id="Preview" />
+  <div class="editor-label">
+    Preview:</div>
+  <div id="Preview"></div>
   <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
   <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
@@ -37,6 +40,11 @@
       @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
     }
   </div>
+@*  <div id="image-selection" class="ui-widget">
+    <img data-imageid="1" src="../../Content/themes/base/images/ui-icons_222222_256x240.png" alt="test" title="test" />
+    <img data-imageid="2" src="../../Content/images/ajax-loader.gif" alt="test2" title="test2" />
+    <img data-imageid="3" src="../../Content/themes/base/images/ui-icons_cd0a0a_256x240.png" alt="test3" title="test3" />
+  </div>*@
 }
 @section head
 {
@@ -111,6 +119,18 @@
 
       loadPreview();
 
+//      $("#image-selection").dialog({
+//        autoOpen: false,
+//        height: 300,
+//        width: 350,
+//        modal: true
+//      });
+
+//      $("#add-image")
+//        .button()
+//        .click(function () {
+//          $("#image-selection").dialog("open");
+//        });
     });
   </script>
 }

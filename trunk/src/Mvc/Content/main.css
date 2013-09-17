@@ -43,9 +43,10 @@ textarea {
   overflow: hidden;
   margin-bottom: 1em;
 }
-#header a#add-article-link {
+#header a#add-article-link, #header a#home-link {
   display: block;
   float: left;
+  margin-right: 10px;
 }
 #header form#search-form {
   display: block;
