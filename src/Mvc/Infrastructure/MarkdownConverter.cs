@@ -44,6 +44,8 @@ namespace Otter.Infrastructure
             list.Add("td", null);
             list.Add("th", null);
 
+            list.Add("img", new string[] { "alt", "src" });
+
             return list;
         }
 

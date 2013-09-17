@@ -251,7 +251,6 @@
     <Content Include="Content\themes\otter\minified\jquery.ui.resizable.min.css" />
     <Content Include="Content\themes\otter\minified\jquery.ui.theme.min.css" />
     <Content Include="Global.asax" />
-    <Content Include="Content\Site.css" />
     <Content Include="Scripts\content-format.js" />
     <Content Include="Scripts\jquery-1.9.1-vsdoc.js" />
     <Content Include="Scripts\jquery-1.9.1.js" />

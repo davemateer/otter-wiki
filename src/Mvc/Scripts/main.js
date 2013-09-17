@@ -1,4 +1,12 @@
 ﻿$(document).ready(function () {
+
+  $('#home-link').button({
+    icons: {
+      primary: "ui-icon-home"
+    },
+    text: false
+  });
+
   $('.add-button').button({
     icons: {
       primary: "ui-icon-circle-plus"
