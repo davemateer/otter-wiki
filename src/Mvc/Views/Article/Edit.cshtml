@@ -99,6 +99,7 @@
     $(document).ready(function () {
 
       $('#edit-form').submit(function () {
+        setDirtyForm(false);
         if ($('#Comment').length > 0 && $('#Comment').val().length == 0 && !confirm('Are you sure you wish to submit your changes without specifying a reason for the change?')) {
           return false;
         }
@@ -119,18 +120,36 @@
 
       loadPreview();
 
-//      $("#image-selection").dialog({
-//        autoOpen: false,
-//        height: 300,
-//        width: 350,
-//        modal: true
-//      });
+      var $inputs = $('#edit-form :input');
 
-//      $("#add-image")
-//        .button()
-//        .click(function () {
-//          $("#image-selection").dialog("open");
-//        });
+      $inputs.change(function () {
+        setDirtyForm(true);
+        $inputs.unbind('change');
+      });
+
+      //      $("#image-selection").dialog({
+      //        autoOpen: false,
+      //        height: 300,
+      //        width: 350,
+      //        modal: true
+      //      });
+
+      //      $("#add-image")
+      //        .button()
+      //        .click(function () {
+      //          $("#image-selection").dialog("open");
+      //        });
     });
+
+    function setDirtyForm(dirty) {
+      if (dirty) {
+        window.onbeforeunload = function (e) {
+          return "You have unsaved changes to the article. Are you sure you want to leave without saving?";
+        }
+      } else {
+        window.onbeforeunload = null;
+      }
+    }
+
   </script>
 }
