@@ -3,18 +3,96 @@
   ViewBag.Title = "Articles by tag";
 }
 <h1 class="title">@ViewBag.Title</h1>
-<ul>
-  @foreach (var tag in Model)
-  {
-    <li>
-      @if (string.IsNullOrEmpty(tag.Tag))
+<div id="sort-links"></div>
+<div id="tag-list">
+  <ul>
+    @foreach (var tag in Model)
+    {
+      <li><span class="tag-name">
+        @if (string.IsNullOrEmpty(tag.Tag))
+        {
+          @Html.ActionLink("(Untagged)", "Untagged");
+        }
+        else
+        {
+          @Html.ActionLink(tag.Tag, "Tagged", new { id = tag.Tag })
+        }</span> (<span class="tag-count">@tag.Count.ToString("N0")</span>)</li>
+    }
+  </ul>
+</div>
+@section head
+{
+  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/ListTags.css")" />
+  <script type="text/javascript">
+  // The minimum size for a single column.
+  var MIN_WIDTH_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumColumnWidth"];
+
+  // Do not create multiple columns if the number of items in each column is less than this number.
+  var MIN_ITEMS_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumItemsPerColumn"];
+  var maxColumns = Math.ceil(@Model.Count() / MIN_ITEMS_PER_COLUMN);
+
+  var currentColumnCount = 1;
+  var currentSort = "name";
+  var tags = null;
+
+  var layoutTags = function (sort) {
+
+    // Calculate the ideal number of columns based on the current width.
+    var idealColumns = Math.min(maxColumns, Math.ceil($('#tag-list').width() / MIN_WIDTH_PER_COLUMN));
+
+    // If the number of columns has changed, or the sort order has changed, re-layout the items.
+    if (idealColumns !== currentColumnCount || sort !== currentSort)
+    {
+      $('#tag-list').empty();
+
+      var itemsPerColumn = Math.ceil(tags.length / idealColumns);
+
+      // Sort either by name (ASC) or count (DESC)
+      var sorted = tags.sort(function(a,b) {
+        return sort === "count" ? b.count - a.count : (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)
+      });
+
+      for (var c = 0; c < idealColumns; c++)
       {
-        @Html.ActionLink("(Untagged)", "Untagged");
+        // Create a new unordered list for this column.
+        var ul = $("<ul/>");
+        for (var i = c * itemsPerColumn; i < (c+1) * itemsPerColumn && i < sorted.length; i++)
+        {
+           // Add the items in the list.
+           var li = $("<li/>");
+           $("<a/>").attr('href', sorted[i].url).text(sorted[i].name + ' (' + sorted[i].count + ')').appendTo(li);
+           li.appendTo(ul);
+        }
+
+        // Add the list to the main content area.
+        ul.appendTo($("#tag-list"));
       }
-      else
-      {
-        @Html.ActionLink(tag.Tag, "Tagged", new { id = tag.Tag })
-      }
-      (@tag.Count.ToString("N0"))</li>
+
+      currentColumnCount = idealColumns;
+      currentSort = sort;
+    }
   }
-</ul>
+
+  $(document).ready(function () {
+    // Map the list items to an object array.
+    tags = $("#tag-list li").map(function() {
+       var tag = new Object();
+       tag.url = $(this).find('a').attr('href');
+       tag.name = $(this).find('span.tag-name').text();
+       tag.count = parseInt($(this).find('span.tag-count').text());
+       return tag;
+    });
+
+    layoutTags();
+
+    $("<a></a>").attr("href", "javascript:void()").text("Sort by name").on("click", function() { layoutTags("name") }).appendTo($("#sort-links"));
+    $("<a></a>").attr("href", "javascript:void()").text("Sort by count").on("click", function() { layoutTags("count") }).appendTo($("#sort-links"));
+  });
+
+  // Whenever the window is resized, check the layout of the items.
+  $(window).resize(function() {
+    layoutTags(currentSort)
+  });
+
+  </script>
+}

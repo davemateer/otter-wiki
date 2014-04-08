@@ -22,7 +22,7 @@
         private readonly ITextToHtmlConverter converter;
         private readonly ISecurityRepository securityRepository;
         private readonly static ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> articleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
-        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["Domain"];
+        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["otter:SecurityDomain"];
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
@@ -335,6 +335,12 @@
 
         public string GetRevisionHtml(int articleId, int revision)
         {
+            string text = this.GetRevisionText(articleId, revision);
+            return this.converter.Convert(text);
+        }
+
+        public string GetRevisionText(int articleId, int revision)
+        {
             var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
             var cmd = conn.CreateCommand();
             cmd.CommandText = "up_Article_SelectRevisionTextDeltaSequence";
@@ -383,7 +389,7 @@
                 conn.Close();
             }
 
-            return this.converter.Convert(text);
+            return text;
         }
 
         public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)

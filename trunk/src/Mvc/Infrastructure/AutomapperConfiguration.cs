@@ -17,6 +17,8 @@
                 .ForMember(m => m.UrlTitle, opt => opt.Ignore())
                 .ForMember(m => m.Html, opt => opt.Ignore());
 
+            Mapper.CreateMap<ArticleBase, ArticleCompareRecord>();
+
             Mapper.AssertConfigurationIsValid();
         }
     }

@@ -3,10 +3,10 @@
   ViewBag.Title = Model.Title;
 }
 <div class="actions no-print">
-  @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle }, new { @class = "edit-button" })
-  @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "history-button" })
+  @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle })
+  @Html.ActionLink("View history", "History", new { id = Model.UrlTitle })
 </div>
-<h1 class="title@{if (Model.Tags.Any()) {<text> with-tags</text>}}">@ViewBag.Title</h1>
+<h1 class="title@{if (Model.Tags.Any()) {<text> with-tags</text>} else {<text> no-tags</text>}}">@ViewBag.Title</h1>
 @if (Model.Tags.Any())
 {
   <ul class="tags article-tags">
@@ -16,7 +16,7 @@
     }
   </ul>
 }
-<div class="content">
+<div id="article-content">
   @Html.Raw(Model.Html)
 </div>
 <p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</p>
@@ -27,7 +27,7 @@
   <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
     $(document).ready(function () {
-      applyContentFormat($('div.content'));
+      applyContentFormat($("#article-content"));
     });
   </script>
 }
