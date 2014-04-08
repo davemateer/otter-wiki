@@ -8,6 +8,3 @@ SET NOCOUNT ON
 INSERT INTO [dbo].[ArticleTag] ( [ArticleId], [Tag] )
 VALUES ( @ArticleId, @Tag )
 
-GO
-
-
