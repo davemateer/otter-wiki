@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
   <title>@ViewBag.Title</title>
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/themes/otter/minified/jquery-ui.min.css")" />
   <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
   <script type="text/javascript">
     var SITE_ROOT = '@Url.Content("~/")';
@@ -15,16 +14,29 @@
   @RenderSection("head", false)
 </head>
 <body>
-  <div id="header">
-    @Html.ActionLink("Home", "Index", "Article", null, new { id = "home-link" })
-    @Html.ActionLink("Create new article", "Create", "Article", null, new { id = "add-article-link", @class = "add-button" })
-    @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
-    {
-      <input type="text" id="query" name="query" />
-      <input type="submit" class="query-submit" value="Search" />
-    }
+  <div class="inner-top top">
+    <div class="header">
+      <div class="header-logo">
+        <a href="@Url.Action("Index", "Article")">
+          <img id="logo" src="@Url.Content("~/Content/images/logo.png")" alt="Otter knowledge base and wiki" /></a>
+      </div>
+      <div class="header-links">
+        @Html.ActionLink("List articles by tag", "ListTags", "Article", null, new { @class = "normal" })
+        @Html.ActionLink("Create new article", "Create", "Article", null, new { @class = "normal" })
+        @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
+        {
+          <input type="text" class="query-search" name="query" />
+          <input type="submit" class="query-submit" value="Search" />
+        }
+      </div>
+    </div>
   </div>
-  @RenderBody()
-  <div id="footer"><a href="https://code.google.com/p/otter-wiki/">Otter knowledge-base and wiki</a>, version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</div>
+  <div class="main-content">
+    @RenderBody()
+  </div>
+  <div id="footer">
+    <p>Otter is an open-source, quick-to-deploy, and simple-to-maintain basic knowledge base and wiki, intended for use within Microsoft-centric environments using .Net and SQL Server.</p>
+    <p><a href="https://code.google.com/p/otter-wiki/">Get the source</a> | Version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</p>
+  </div>
 </body>
 </html>

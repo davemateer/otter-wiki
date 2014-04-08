@@ -4,44 +4,51 @@
   int penultimateRevision = Model.HistoryRecords.Any() ? Model.HistoryRecords.Max(r => r.Revision) : 0;
 }
 <h1 class="title">@Model.Title</h1>
-<h2>History</h2>
 @using (@Html.BeginForm("Compare", "Article", new { id = Model.UrlTitle }, FormMethod.Get))
 {
-<table class="grid">
-  <thead>
-    <tr>
-      <th>Version</th>
-      <th>Updated by</th>
-      <th>Updated when</th>
-      <th>Comment</th>
-      <th>View</th>
-      <th>Compare From</th>
-      <th>Compare To</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>@Model.Revision (current)</td>
-      <td>@Model.UpdatedBy</td>
-      <td>@Model.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
-      <td>@Model.Comment</td>
-      <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
-      <td><input type="radio" name="compareFrom" value="@Model.Revision"@{ if (!Model.HistoryRecords.Any()) { <text>disabled="disabled"</text> } } /></td>
-      <td><input type="radio" name="compareTo" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any()) { <text>disabled="disabled"</text> } }/></td>
-    </tr>
-    @foreach (var record in Model.HistoryRecords)
-    {
+  <div class="edit-actions" style="margin: 1em 0">
+    <input type="submit" value="Compare selected revisions" />
+  </div>
+  <table class="grid">
+    <thead>
       <tr>
-      <td>@record.Revision</td>
-      <td>@record.UpdatedBy</td>
-      <td>@record.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
-      <td>@record.Comment</td>
-      <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
-      <td><input type="radio" name="compareFrom" value="@record.Revision"@{ if (record.Revision == penultimateRevision) { <text>checked="checked"</text> } } /></td>
-      <td><input type="radio" name="compareTo" value="@record.Revision" /></td>
-    </tr>
-    }
-  </tbody>
-</table>
-<input type="submit" value="Compare selected revisions" />
+        <th>Version</th>
+        <th>Updated by</th>
+        <th>Updated when</th>
+        <th>Comment</th>
+        <th>View</th>
+        <th>Compare From</th>
+        <th>Compare To</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>@Model.Revision (current)</td>
+        <td>@Model.UpdatedBy</td>
+        <td>@Model.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
+        <td>@Model.Comment</td>
+        <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
+        <td><input type="radio" name="compareFrom" value="@Model.Revision"@{ if (!Model.HistoryRecords.Any())
+                                                                             { <text>disabled="disabled"</text> } } /></td>
+        <td><input type="radio" name="compareTo" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any())
+                                                                                             { <text>disabled="disabled"</text> } }/></td>
+      </tr>
+      @foreach (var record in Model.HistoryRecords)
+      {
+        <tr>
+          <td>@record.Revision</td>
+          <td>@record.UpdatedBy</td>
+          <td>@record.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
+          <td>@record.Comment</td>
+          <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
+          <td><input type="radio" name="compareFrom" value="@record.Revision"@{ if (record.Revision == penultimateRevision)
+                                                                                { <text>checked="checked"</text> } } /></td>
+          <td><input type="radio" name="compareTo" value="@record.Revision" /></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  <div class="edit-actions" style="margin: 1em 0">
+    <input type="submit" value="Compare selected revisions" />
+  </div>
 }

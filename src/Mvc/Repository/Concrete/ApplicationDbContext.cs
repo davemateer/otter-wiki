@@ -13,6 +13,7 @@ namespace Otter.Repository.Concrete
     {
         public ApplicationDbContext() : base("Otter")
         {
+            Database.SetInitializer<ApplicationDbContext>(null);
         }
 
         public DbSet<Article> Articles

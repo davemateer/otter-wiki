@@ -11,6 +11,8 @@
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
+using System.Globalization;
+    using DiffMatchPatch;
 
     public class ArticleController : Controller
     {
@@ -72,15 +74,7 @@
                 model = Mapper.Map<ArticleReadModel>(article);
             }
 
-            if (!string.IsNullOrEmpty(model.UpdatedBy))
-            {
-                var entity = this.securityRepository.Find(model.UpdatedBy, SecurityEntityTypes.User);
-                if (entity != null)
-                {
-                    model.UpdatedByDisplayName = entity.Name;
-                }
-            }
-
+            this.SetUpdatedDisplayName(model);
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
 
             return View(model);
@@ -354,7 +348,7 @@
                 throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
             }
 
-            var article = this.articleRepository.Articles.Where(a => a.UrlTitle == id).Select(a => new { a.ArticleId, a.Revision }).FirstOrDefault();
+            ArticleBase article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
                 return HttpNotFound();
@@ -365,10 +359,38 @@
                 return new HttpUnauthorizedResult();
             }
 
-            //string textFrom = null;
-            //string textTo = null;
+            ArticleBase articleFrom = this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareFrom);
+            if (articleFrom == null)
+            {
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareFrom), "compareFrom");
+            }
 
-            return HttpNotFound();
+            ArticleBase articleTo = compareTo == article.Revision ? article : this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareTo);
+            if (articleTo == null)
+            {
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareTo), "compareTo");
+            }
+
+            var model = new ArticleCompareModel
+            {
+                ArticleId = article.ArticleId,
+                CompareFrom = Mapper.Map<ArticleCompareRecord>(articleFrom),
+                CompareTo = Mapper.Map<ArticleCompareRecord>(articleTo),
+                Title = article.Title,
+                UrlTitle = id
+            };
+
+            this.SetUpdatedDisplayName(model.CompareFrom);
+            this.SetUpdatedDisplayName(model.CompareTo);
+
+            string textFrom = string.IsNullOrEmpty(articleFrom.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareFrom) : articleFrom.Text;
+            string textTo = string.IsNullOrEmpty(articleTo.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareTo) : articleTo.Text;
+            diff_match_patch diff = new diff_match_patch();
+            List<Diff> diffs = diff.diff_main(textFrom, textTo);
+            diff.diff_cleanupSemantic(diffs);
+            model.Diff = diff.diff_prettyHtml(diffs);
+
+            return this.View(model);
         }
 
         [HttpGet]
@@ -435,5 +457,18 @@
                 html = this.htmlConverter.Convert(text)
             });
         }
+
+        private void SetUpdatedDisplayName(IUpdatedArticle article)
+        {
+            if (!string.IsNullOrEmpty(article.UpdatedBy))
+            {
+                var entity = this.securityRepository.Find(article.UpdatedBy, SecurityEntityTypes.User);
+                if (entity != null)
+                {
+                    article.UpdatedByDisplayName = entity.Name;
+                }
+            }
+        }
     }
 }
+

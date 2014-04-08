@@ -4,7 +4,7 @@
     using System.Collections.Generic;
     using AutoMapper;
 
-    public sealed class ArticleReadModel
+    public sealed class ArticleReadModel : IUpdatedArticle
     {
         public int ArticleId { get; set; }
 

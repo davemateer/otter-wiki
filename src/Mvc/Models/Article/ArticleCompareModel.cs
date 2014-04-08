@@ -1,6 +1,7 @@
 ﻿namespace Otter.Models
 {
-    using System;
+    using System.Collections.Generic;
+    using DiffMatchPatch;
 
     public sealed class ArticleCompareModel
     {
@@ -13,5 +14,7 @@
         public ArticleCompareRecord CompareFrom { get; set; }
 
         public ArticleCompareRecord CompareTo { get; set; }
+
+        public string Diff { get; set; }
     }
 }

@@ -1,44 +1,5 @@
 ﻿$(document).ready(function () {
 
-  $('#home-link').button({
-    icons: {
-      primary: "ui-icon-home"
-    },
-    text: false
-  });
-
-  $('.add-button').button({
-    icons: {
-      primary: "ui-icon-circle-plus"
-    }
-  });
-
-  $('.edit-button').button({
-    icons: {
-      primary: "ui-icon-pencil"
-    }
-  });
-
-  $('.history-button').button({
-    icons: {
-      primary: "ui-icon-clock"
-    }
-  });
-
-  $('.cancel-button').button({
-    icons: {
-      primary: "ui-icon-cancel"
-    }
-  });
-
-  $('.list-button').button({
-    icons: {
-      primary: "ui-icon-tag"
-    }
-  });
-
-  $('input.query-submit, input.submit-button').button();
-
   $('input.permission-option').change(function () {
     $(this).siblings('input.permission-accounts').prop('disabled', !($(this).hasClass('specified')));
   });

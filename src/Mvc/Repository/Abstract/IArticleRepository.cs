@@ -23,6 +23,8 @@
 
         string GetRevisionHtml(int articleId, int revision);
 
+        string GetRevisionText(int articleId, int revision);
+
         IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
 
         IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity);
