@@ -9,4 +9,3 @@ DELETE FROM [dbo].[ArticleTag]
 WHERE
 	ArticleId = @ArticleId
 	AND Tag = @Tag
-GO

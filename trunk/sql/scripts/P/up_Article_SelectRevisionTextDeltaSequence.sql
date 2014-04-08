@@ -1,4 +1,4 @@
-ALTER PROCEDURE up_Article_SelectRevisionTextDeltaSequence (
+CREATE PROCEDURE up_Article_SelectRevisionTextDeltaSequence (
 	@ArticleId int,
 	@Revision int
 ) AS

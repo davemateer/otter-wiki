@@ -1,4 +1,4 @@
-ALTER PROCEDURE [dbo].[up_Article_Update] (
+CREATE PROCEDURE [dbo].[up_Article_Update] (
 	@ArticleId int
 	,@Title nvarchar(100)
 	,@UrlTitle nvarchar(100)
@@ -10,6 +10,9 @@ ALTER PROCEDURE [dbo].[up_Article_Update] (
 ) AS
 
 SET NOCOUNT ON
+
+DECLARE @SnapshotInterval int
+SET @SnapshotInterval = dbo.ufx_GetConfigurationValueInt('SnapshotInterval', 50)
 
 DECLARE @LastError int
 DECLARE @Revision int
@@ -39,7 +42,7 @@ BEGIN TRANSACTION
 		,a.Title
 		,@Delta
 		,CASE
-			WHEN a.Revision % 50 = 0 THEN a.[Text]
+			WHEN a.Revision % @SnapshotInterval = 0 THEN a.[Text]
 			ELSE NULL
 		END
 	FROM dbo.Article a
@@ -70,4 +73,3 @@ BEGIN TRANSACTION
 	END
 
 COMMIT
-GO

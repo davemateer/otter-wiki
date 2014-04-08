@@ -1,14 +1,4 @@
-USE [otter]
-GO
-
-/****** Object:  StoredProcedure [dbo].[up_ArticleSecurity_Update]    Script Date: 05/06/2013 16:28:27 ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE [dbo].[up_ArticleSecurity_Update] (
+CREATE PROCEDURE dbo.up_ArticleSecurity_Update (
 	@ArticleId int
 	,@Scope char(1)
 	,@EntityId nvarchar(256)
@@ -30,7 +20,3 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
    INSERT (ArticleId, Scope, EntityId, Permission) VALUES (@ArticleId, @Scope, @EntityId, @Permission)
 ;
-
-GO
-
-
