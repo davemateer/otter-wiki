@@ -4,15 +4,15 @@
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.DirectoryServices.AccountManagement;
+    using System.Globalization;
     using System.Linq;
     using System.Web.Mvc;
     using AutoMapper;
+    using DiffMatchPatch;
     using Otter.Domain;
     using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
-using System.Globalization;
-    using DiffMatchPatch;
 
     public class ArticleController : Controller
     {
@@ -324,7 +324,9 @@ using System.Globalization;
             }
 
             var model = Mapper.Map<ArticleHistoryModel>(article);
-            model.HistoryRecords = from a in this.articleRepository.Articles
+            this.SetUpdatedDisplayName(model);
+
+            model.HistoryRecords = (from a in this.articleRepository.Articles
                                    join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
                                    where a.UrlTitle == id
                                    orderby h.Revision descending
@@ -334,7 +336,12 @@ using System.Globalization;
                                        UpdatedBy = h.UpdatedBy,
                                        UpdatedDtm = h.UpdatedDtm,
                                        Comment = h.Comment
-                                   };
+                                   }).ToList();
+
+            foreach (ArticleHistoryRecord record in model.HistoryRecords)
+            {
+                this.SetUpdatedDisplayName(record);
+            }
 
             return View(model);
         }
@@ -403,12 +410,21 @@ using System.Globalization;
         [HttpGet]
         public ActionResult Search(string query)
         {
-            var model = new ArticleSearchModel()
+            var model = new ArticleSearchModel
             {
-                Articles = this.articleRepository.SearchByQuery(query, this.User.Identity),
-                Query = query,
-                Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct()
+                Query = query
             };
+
+            if (string.IsNullOrEmpty(query))
+            {
+                model.Articles = new ArticleSearchResult[0];
+                model.Tags = new string[0];
+            }
+            else
+            {
+                model.Articles = this.articleRepository.SearchByQuery(query, this.User.Identity);
+                model.Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct();
+            }
 
             // TODO: remove items where the user does not have read permissions.
 

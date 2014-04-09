@@ -20,8 +20,9 @@
     @foreach (var article in Model.Articles)
     {
       <li>
-        @Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "search-result-title" })
-        <span class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedDtm, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</span></li>
+        <div class="search-result-title">@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</div>
+        <div class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedDtm, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</div>
+      </li>
     }
   </ul>
 }
