@@ -6,9 +6,12 @@
 <h1 class="title">@Model.Title</h1>
 @using (@Html.BeginForm("Compare", "Article", new { id = Model.UrlTitle }, FormMethod.Get))
 {
+  if (Model.HistoryRecords.Any())
+  {
   <div class="edit-actions" style="margin: 1em 0">
     <input type="submit" value="Compare selected revisions" />
   </div>
+  }
   <table class="grid">
     <thead>
       <tr>
@@ -24,31 +27,57 @@
     <tbody>
       <tr>
         <td>@Model.Revision (current)</td>
-        <td>@Model.UpdatedBy</td>
+        <td>@(string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : Model.UpdatedByDisplayName ?? Model.UpdatedBy)</td>
         <td>@Model.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
         <td>@Model.Comment</td>
         <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
-        <td><input type="radio" name="compareFrom" value="@Model.Revision"@{ if (!Model.HistoryRecords.Any())
-                                                                             { <text>disabled="disabled"</text> } } /></td>
-        <td><input type="radio" name="compareTo" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any())
-                                                                                             { <text>disabled="disabled"</text> } }/></td>
+        <td>&nbsp;</td>
+        <td><input type="radio" name="compareTo" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any()) { <text>disabled="disabled"</text> } }/></td>
       </tr>
-      @foreach (var record in Model.HistoryRecords)
+      @for (int i = 0; i < Model.HistoryRecords.Count(); i++)
       {
+        Otter.Models.ArticleHistoryRecord record = Model.HistoryRecords.ElementAt(i);
         <tr>
           <td>@record.Revision</td>
-          <td>@record.UpdatedBy</td>
+          <td>@(string.IsNullOrEmpty(record.UpdatedBy) ? string.Empty : record.UpdatedByDisplayName ?? record.UpdatedBy)</td>
           <td>@record.UpdatedDtm.ToString("f", System.Globalization.CultureInfo.CurrentUICulture)</td>
           <td>@record.Comment</td>
           <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
-          <td><input type="radio" name="compareFrom" value="@record.Revision"@{ if (record.Revision == penultimateRevision)
-                                                                                { <text>checked="checked"</text> } } /></td>
-          <td><input type="radio" name="compareTo" value="@record.Revision" /></td>
+          <td><input type="radio" name="compareFrom" value="@record.Revision"@{ if (record.Revision == penultimateRevision) { <text>checked="checked"</text> } } /></td>
+          <td>
+            @if (i < Model.HistoryRecords.Count() - 1)
+            {
+              <input type="radio" name="compareTo" value="@record.Revision" />
+            }
+          </td>
         </tr>
       }
     </tbody>
   </table>
+      if (Model.HistoryRecords.Any())
+      {
   <div class="edit-actions" style="margin: 1em 0">
     <input type="submit" value="Compare selected revisions" />
   </div>
+      }
+}
+@section head
+{
+<script type="text/javascript">
+  $(document).ready(function () {
+    $("input:radio[name='compareTo']").change(function () {
+      // If the "compareFrom" value is greater or equal to the new "compareTo" value, change it to the previous revision.
+      var compareTo = parseInt($(this).val());
+      var compareFrom = parseInt($("input:radio[name='compareFrom']:checked").val());
+      if (compareFrom >= compareTo) {
+        $("input:radio[name='compareFrom']").val([compareTo - 1]);
+      }
+
+      // Disable all "compareFrom" values greater or equal to the new "compareTo" value.
+      $("input:radio[name='compareFrom']").each(function () {
+        $(this).prop("disabled", parseInt($(this).attr("value")) >= compareTo);
+      });
+    });
+  });
+</script>
 }

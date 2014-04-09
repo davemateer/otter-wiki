@@ -12,8 +12,7 @@
   @*<div><button id="add-image">Add image</button></div>*@
   <div>@Html.ValidationMessageFor(m => m.Text)</div>
   <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
-  <div class="editor-label">
-    Preview:</div>
+  <div class="editor-label">Preview:</div>
   <div id="Preview"></div>
   <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
   <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
@@ -40,11 +39,6 @@
       @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
     }
   </div>
-@*  <div id="image-selection" class="ui-widget">
-    <img data-imageid="1" src="../../Content/themes/base/images/ui-icons_222222_256x240.png" alt="test" title="test" />
-    <img data-imageid="2" src="../../Content/images/ajax-loader.gif" alt="test2" title="test2" />
-    <img data-imageid="3" src="../../Content/themes/base/images/ui-icons_cd0a0a_256x240.png" alt="test3" title="test3" />
-  </div>*@
 }
 @section head
 {
@@ -96,6 +90,21 @@
       });
     }
 
+    var setDirtyForm = function (dirty) {
+      if (dirty) {
+        window.onbeforeunload = function (e) {
+          return "You have unsaved changes to the article. Are you sure you want to leave without saving?";
+        }
+      } else {
+        window.onbeforeunload = null;
+      }
+    }
+
+    var dirtyHandler = function () {
+      setDirtyForm(true);
+      $('#edit-form :input').unbind("change", dirtyHandler);
+    }
+
     $(document).ready(function () {
 
       $('#edit-form').submit(function () {
@@ -120,36 +129,9 @@
 
       loadPreview();
 
-      var $inputs = $('#edit-form :input');
+      $('#edit-form :input').bind("change", dirtyHandler);
 
-      $inputs.change(function () {
-        setDirtyForm(true);
-        $inputs.unbind('change');
-      });
-
-      //      $("#image-selection").dialog({
-      //        autoOpen: false,
-      //        height: 300,
-      //        width: 350,
-      //        modal: true
-      //      });
-
-      //      $("#add-image")
-      //        .button()
-      //        .click(function () {
-      //          $("#image-selection").dialog("open");
-      //        });
     });
-
-    function setDirtyForm(dirty) {
-      if (dirty) {
-        window.onbeforeunload = function (e) {
-          return "You have unsaved changes to the article. Are you sure you want to leave without saving?";
-        }
-      } else {
-        window.onbeforeunload = null;
-      }
-    }
 
   </script>
 }

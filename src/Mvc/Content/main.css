@@ -31,6 +31,9 @@ body {
 .header-logo {
   text-align: left;
 }
+#logo {
+  border-width: 0;
+}
 .header-links {
   text-align: right;
 }
@@ -85,7 +88,7 @@ body {
   margin: 2em;
 }
 .home-footer {
-  margin: 2em;
+  margin: 2em 4em 1em 4em;
   font-size: 1.25em;
   color: #999;
   text-align: center;
@@ -199,9 +202,10 @@ ul.tags a:hover {
   background-color: #326463;
 }
 .search-result-details {
-  color: #999;
-  margin-left: 2em;
-  font-size: 0.8em;
+  color: #666;
+  margin: 0.25em 0 1.25em 20px;
+  font-size: 0.9em;
+  font-style: italic;
 }
 a.select-all {
   display: block;

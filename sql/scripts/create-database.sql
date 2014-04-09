@@ -1,3 +1,13 @@
+-- UDTT SecurityEntityTable
+CREATE TYPE [dbo].[SecurityEntityTable] AS TABLE(
+	[EntityId] [nvarchar](256) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
+)
+GO
+-- FTC ArticleFullTextCatalog
+CREATE FULLTEXT CATALOG [ArticleFullTextCatalog]WITH ACCENT_SENSITIVITY = OFF
+AS DEFAULT
+
+GO
 -- TBL Configuration
 SET ANSI_NULLS ON
 GO
@@ -49,6 +59,15 @@ CREATE UNIQUE CLUSTERED INDEX [IX_Article_UrlTitle] ON [dbo].[Article]
 (
 	[UrlTitle] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+
+CREATE FULLTEXT INDEX ON [dbo].[Article](
+[Text] LANGUAGE [English], 
+[Title] LANGUAGE [English])
+KEY INDEX [IX_Article_UrlTitle]ON ([ArticleFullTextCatalog], FILEGROUP [PRIMARY])
+WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
+
+
 GO
 -- TBL ArticleHistory
 SET ANSI_NULLS ON

@@ -1,6 +1,6 @@
 ﻿$(document).ready(function () {
 
-  $('input.permission-option').change(function () {
+  $('input[type=radio]').on('change', function () {
     $(this).siblings('input.permission-accounts').prop('disabled', !($(this).hasClass('specified')));
   });
 
