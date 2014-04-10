@@ -1,4 +1,29 @@
-﻿namespace Otter.Repository
+﻿//-----------------------------------------------------------------------
+// <copyright file="SecurityRepository.cs" company="Dave Mateer">
+// The MIT License (MIT)
+//
+// Copyright (c) 2014 Dave Mateer
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace Otter.Repository
 {
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -10,7 +35,7 @@
     public sealed class SecurityRepository : ISecurityRepository
     {
         // Using ConcurrentDictionary because a new instance is created per request, but we are sharing this dictionary across instances.
-        private readonly static ConcurrentDictionary<string, SecurityEntity> ldapCache = new ConcurrentDictionary<string, SecurityEntity>();
+        private static readonly ConcurrentDictionary<string, SecurityEntity> LdapCache = new ConcurrentDictionary<string, SecurityEntity>();
 
         public IEnumerable<SecurityEntity> Search(string query)
         {
@@ -51,7 +76,7 @@
         {
             // Is there already a value in the cache?
             SecurityEntity cachedEntity;
-            if (ldapCache.TryGetValue(value, out cachedEntity) && option.HasFlag(cachedEntity.EntityType))
+            if (LdapCache.TryGetValue(value, out cachedEntity) && option.HasFlag(cachedEntity.EntityType))
             {
                 // Return the cached value.
                 return cachedEntity;
@@ -89,7 +114,7 @@
                         }
 
                         cachedEntity = SecurityEntity.FromSearchResult(group, SecurityEntityTypes.Group);
-                        ldapCache.TryAdd(value, cachedEntity);
+                        LdapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -126,7 +151,7 @@
                         }
 
                         cachedEntity = SecurityEntity.FromSearchResult(user, SecurityEntityTypes.User);
-                        ldapCache.TryAdd(value, cachedEntity);
+                        LdapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -147,7 +172,7 @@
                             Name = identity.DisplayName
                         };
 
-                        ldapCache.TryAdd(value, cachedEntity);
+                        LdapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }
@@ -164,7 +189,7 @@
                             Name = group.DisplayName
                         };
 
-                        ldapCache.TryAdd(value, cachedEntity);
+                        LdapCache.TryAdd(value, cachedEntity);
                         return cachedEntity;
                     }
                 }

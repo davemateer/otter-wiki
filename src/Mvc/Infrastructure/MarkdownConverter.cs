@@ -1,4 +1,28 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="MarkdownConverter.cs" company="Dave Mateer">
+// The MIT License (MIT)
+//
+// Copyright (c) 2014 Dave Mateer
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+// </copyright>
+//-----------------------------------------------------------------------
 namespace Otter.Infrastructure
 {
     using System;
@@ -12,7 +36,16 @@ namespace Otter.Infrastructure
 
     public sealed class MarkdownConverter : ITextToHtmlConverter
     {
-        private static readonly Dictionary<string, string[]> whitelist = CreateWhitelist();
+        private static readonly Dictionary<string, string[]> Whitelist = CreateWhitelist();
+
+        public string Convert(string plainText)
+        {
+            var markdown = new Markdown();
+            string html = Regex.Replace(plainText, @"^\s*\{\|.*?\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
+            html = markdown.Transform(html);
+            html = Purify(html);
+            return html;
+        }
 
         private static Dictionary<string, string[]> CreateWhitelist()
         {
@@ -47,15 +80,6 @@ namespace Otter.Infrastructure
             list.Add("img", new string[] { "alt", "src" });
 
             return list;
-        }
-
-        public string Convert(string plainText)
-        {
-            var markdown = new Markdown();
-            string html = Regex.Replace(plainText, @"^\s*\{\|.*?\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
-            html = markdown.Transform(html);
-            html = Purify(html);
-            return html;
         }
 
         private static string RenderTable(Match match)
@@ -260,7 +284,7 @@ namespace Otter.Infrastructure
 
         private static void WriteCellContent(XmlWriter writer, StringBuilder content, Stack<string> context)
         {
-            while (content.Length > 0 && Char.IsWhiteSpace(content[content.Length - 1]))
+            while (content.Length > 0 && char.IsWhiteSpace(content[content.Length - 1]))
             {
                 content.Remove(content.Length - 1, 1);
             }
@@ -294,12 +318,13 @@ namespace Otter.Infrastructure
         {
             if (node.NodeType == HtmlNodeType.Element && node.HasAttributes)
             {
-                string[] allowedAttributes = whitelist[node.Name];
+                string[] allowedAttributes = Whitelist[node.Name];
 
                 if (allowedAttributes == null || allowedAttributes.Length == 0)
                 {
                     node.Attributes.RemoveAll();
                 }
+
                 // Remove invalid attributes.
                 for (int i = node.Attributes.Count() - 1; i >= 0; i--)
                 {
@@ -311,7 +336,7 @@ namespace Otter.Infrastructure
             }
 
             // Purify all child nodes.
-            var childrenToRemove = node.ChildNodes.Where(n => n.NodeType == HtmlNodeType.Element && !whitelist.ContainsKey(n.Name)).ToArray();
+            var childrenToRemove = node.ChildNodes.Where(n => n.NodeType == HtmlNodeType.Element && !Whitelist.ContainsKey(n.Name)).ToArray();
             for (int i = 0; i < childrenToRemove.Length; i++)
             {
                 node.RemoveChild(childrenToRemove[i], false);
