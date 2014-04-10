@@ -124,7 +124,7 @@
     <Compile Include="Models\Article\ArticleSearchModel.cs" />
     <Compile Include="Models\Article\IUpdatedArticle.cs" />
     <Compile Include="Models\PermissionModel.cs" />
-    <Compile Include="Models\PermissionScope.cs" />
+    <Compile Include="Models\PermissionOption.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\Abstract\IApplicationDbContext.cs" />
     <Compile Include="Repository\Abstract\IArticleRepository.cs" />

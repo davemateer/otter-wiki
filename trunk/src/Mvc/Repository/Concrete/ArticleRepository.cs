@@ -1,4 +1,29 @@
-﻿namespace Otter.Repository
+﻿//-----------------------------------------------------------------------
+// <copyright file="ArticleRepository.cs" company="Dave Mateer">
+// The MIT License (MIT)
+//
+// Copyright (c) 2014 Dave Mateer
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace Otter.Repository
 {
     using System;
     using System.Collections.Concurrent;
@@ -18,11 +43,12 @@
 
     public sealed class ArticleRepository : IArticleRepository
     {
+        private static readonly ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> ArticleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
+        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["otter:SecurityDomain"];
+
         private readonly IApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
         private readonly ISecurityRepository securityRepository;
-        private readonly static ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> articleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
-        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["otter:SecurityDomain"];
 
         public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
@@ -60,7 +86,6 @@
             }
 
             // TODO: Ensure url title is unique
-
             string html = this.converter.Convert(text);
 
             using (var scope = new TransactionScope())
@@ -328,7 +353,7 @@
                 if (invalidateSecurityCache)
                 {
                     IEnumerable<ArticleSecurity> dummy;
-                    articleSecurityCache.TryRemove(articleId, out dummy);
+                    ArticleSecurityCache.TryRemove(articleId, out dummy);
                 }
             }
         }
@@ -381,7 +406,6 @@
                             text = (string)results[0];
                         }
                     }
-
                 }
             }
             finally
@@ -511,21 +535,6 @@
             return results;
         }
 
-        private void GetDisplayNames(List<ArticleSearchResult> results)
-        {
-            results.ForEach(delegate(ArticleSearchResult sr)
-            {
-                if (!string.IsNullOrEmpty(sr.UpdatedBy))
-                {
-                    var entity = this.securityRepository.Find(sr.UpdatedBy, SecurityEntityTypes.User);
-                    if (entity != null)
-                    {
-                        sr.UpdatedByDisplayName = entity.Name;
-                    }
-                }
-            });
-        }
-
         public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
         {
             // Assume that permissions are specified groups and individuals. If we find an "Everyone" scope in the
@@ -616,7 +625,7 @@
         {
             string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
 
-            IEnumerable<ArticleSecurity> security = GetSecurityRecords(articleId);
+            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
 
             foreach (var record in security)
             {
@@ -635,7 +644,7 @@
         {
             string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
 
-            IEnumerable<ArticleSecurity> security = GetSecurityRecords(articleId);
+            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
 
             foreach (var record in security)
             {
@@ -649,56 +658,6 @@
             }
 
             return false;
-        }
-
-        private IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId)
-        {
-            IEnumerable<ArticleSecurity> security;
-            if (!articleSecurityCache.TryGetValue(articleId, out security))
-            {
-                List<ArticleSecurity> temp = this.ArticleSecurity.Where(s => s.ArticleId == articleId).ToList();
-                temp.Sort((s1, s2) => GetScopeOrder(s1.Scope).CompareTo(GetScopeOrder(s2.Scope)));
-                articleSecurityCache.TryAdd(articleId, temp);
-                security = temp;
-            }
-
-            return security;
-        }
-
-        private static int GetScopeOrder(string scope)
-        {
-            // Minor effeciency; sort items in the records in the order from least to most expensive to process.
-            if (scope == Domain.ArticleSecurity.ScopeEveryone)
-            {
-                return 0;
-            }
-
-            if (scope == Domain.ArticleSecurity.ScopeIndividual)
-            {
-                return 1;
-            }
-
-            if (scope == Domain.ArticleSecurity.ScopeGroup)
-            {
-                return 2;
-            }
-
-            Debug.Fail("Invalid scope : " + scope);
-            return int.MaxValue;
-        }
-
-        private void StandardizeAccounts(List<string> accounts, SecurityEntityTypes type)
-        {
-            accounts.RemoveAll(s => string.IsNullOrEmpty(s));
-
-            for (int i = 0; i < accounts.Count; i++)
-            {
-                SecurityEntity entity = this.securityRepository.Find(accounts[i], type);
-                if (entity != null)
-                {
-                    accounts[i] = entity.ToString();
-                }
-            }
         }
 
         public IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity)
@@ -741,6 +700,71 @@
             finally
             {
                 conn.Close();
+            }
+        }
+
+        private static int GetScopeOrder(string scope)
+        {
+            // Minor effeciency; sort items in the records in the order from least to most expensive to process.
+            if (scope == Domain.ArticleSecurity.ScopeEveryone)
+            {
+                return 0;
+            }
+
+            if (scope == Domain.ArticleSecurity.ScopeIndividual)
+            {
+                return 1;
+            }
+
+            if (scope == Domain.ArticleSecurity.ScopeGroup)
+            {
+                return 2;
+            }
+
+            Debug.Fail("Invalid scope : " + scope);
+            return int.MaxValue;
+        }
+
+        private IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId)
+        {
+            IEnumerable<ArticleSecurity> security;
+            if (!ArticleSecurityCache.TryGetValue(articleId, out security))
+            {
+                List<ArticleSecurity> temp = this.ArticleSecurity.Where(s => s.ArticleId == articleId).ToList();
+                temp.Sort((s1, s2) => GetScopeOrder(s1.Scope).CompareTo(GetScopeOrder(s2.Scope)));
+                ArticleSecurityCache.TryAdd(articleId, temp);
+                security = temp;
+            }
+
+            return security;
+        }
+
+        private void GetDisplayNames(List<ArticleSearchResult> results)
+        {
+            results.ForEach(delegate(ArticleSearchResult sr)
+            {
+                if (!string.IsNullOrEmpty(sr.UpdatedBy))
+                {
+                    var entity = this.securityRepository.Find(sr.UpdatedBy, SecurityEntityTypes.User);
+                    if (entity != null)
+                    {
+                        sr.UpdatedByDisplayName = entity.Name;
+                    }
+                }
+            });
+        }
+
+        private void StandardizeAccounts(List<string> accounts, SecurityEntityTypes type)
+        {
+            accounts.RemoveAll(s => string.IsNullOrEmpty(s));
+
+            for (int i = 0; i < accounts.Count; i++)
+            {
+                SecurityEntity entity = this.securityRepository.Find(accounts[i], type);
+                if (entity != null)
+                {
+                    accounts[i] = entity.ToString();
+                }
             }
         }
 

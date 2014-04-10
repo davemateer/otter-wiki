@@ -1,4 +1,29 @@
-﻿namespace Otter.Controllers
+﻿//-----------------------------------------------------------------------
+// <copyright file="ArticleController.cs" company="Dave Mateer">
+// The MIT License (MIT)
+//
+// Copyright (c) 2014 Dave Mateer
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace Otter.Controllers
 {
     using System;
     using System.Collections.Generic;
@@ -30,7 +55,7 @@
         [HttpGet]
         public ActionResult Index()
         {
-            return View();
+            return this.View();
         }
 
         [HttpGet]
@@ -38,7 +63,7 @@
         {
             var articles = this.articleRepository.GetTagSummary(this.User.Identity);
             var model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
-            return View(model);
+            return this.View(model);
         }
 
         [HttpGet]
@@ -47,7 +72,7 @@
             var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
-                return HttpNotFound();
+                return this.HttpNotFound();
             }
 
             if (!this.articleRepository.CanView(this.User, article.ArticleId))
@@ -62,7 +87,7 @@
                 var articleRevision = this.articleRepository.ArticleHistory.FirstOrDefault(h => h.ArticleId == article.ArticleId && h.Revision == revision.Value);
                 if (articleRevision == null)
                 {
-                    return HttpNotFound();
+                    return this.HttpNotFound();
                 }
 
                 model = Mapper.Map<ArticleReadModel>(articleRevision);
@@ -77,7 +102,7 @@
             this.SetUpdatedDisplayName(model);
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
 
-            return View(model);
+            return this.View(model);
         }
 
         [HttpGet]
@@ -89,7 +114,7 @@
                 IsNewArticle = true,
             };
 
-            return View("Edit", model);
+            return this.View("Edit", model);
         }
 
         [HttpPost]
@@ -105,7 +130,216 @@
             }
 
             string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
-            return RedirectToAction("Read", new { id = title });
+            return this.RedirectToAction("Read", new { id = title });
+        }
+
+        [HttpGet]
+        public ActionResult Edit(string id)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            var model = Mapper.Map<ArticleEditModel>(article);
+            model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
+
+            model.Security = new PermissionModel();
+            this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+
+            return this.View(model);
+        }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public ActionResult Edit(ArticleEditModel model)
+        {
+            if (!this.articleRepository.CanModify(this.User, model.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            List<string> tags = SplitTags(model.Tags);
+            List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
+
+            if (!this.ModelState.IsValid)
+            {
+                return this.View(model);
+            }
+
+            // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
+            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            return this.RedirectToAction("Read", new { id = model.UrlTitle });
+        }
+
+        [HttpGet]
+        public ActionResult History(string id)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanView(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            var model = Mapper.Map<ArticleHistoryModel>(article);
+            this.SetUpdatedDisplayName(model);
+
+            model.HistoryRecords = (from a in this.articleRepository.Articles
+                                   join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
+                                   where a.UrlTitle == id
+                                   orderby h.Revision descending
+                                   select new ArticleHistoryRecord()
+                                   {
+                                       Revision = h.Revision,
+                                       UpdatedBy = h.UpdatedBy,
+                                       UpdatedDtm = h.UpdatedDtm,
+                                       Comment = h.Comment
+                                   }).ToList();
+
+            foreach (ArticleHistoryRecord record in model.HistoryRecords)
+            {
+                this.SetUpdatedDisplayName(record);
+            }
+
+            return this.View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Compare(string id, int compareFrom, int compareTo)
+        {
+            Debug.Assert(compareFrom < compareTo, "compareFrom < compareTo");
+            if (compareFrom >= compareTo)
+            {
+                throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
+            }
+
+            ArticleBase article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanView(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            ArticleBase articleFrom = this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareFrom);
+            if (articleFrom == null)
+            {
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareFrom), "compareFrom");
+            }
+
+            ArticleBase articleTo = compareTo == article.Revision ? article : this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareTo);
+            if (articleTo == null)
+            {
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareTo), "compareTo");
+            }
+
+            var model = new ArticleCompareModel
+            {
+                ArticleId = article.ArticleId,
+                CompareFrom = Mapper.Map<ArticleCompareRecord>(articleFrom),
+                CompareTo = Mapper.Map<ArticleCompareRecord>(articleTo),
+                Title = article.Title,
+                UrlTitle = id
+            };
+
+            this.SetUpdatedDisplayName(model.CompareFrom);
+            this.SetUpdatedDisplayName(model.CompareTo);
+
+            string textFrom = string.IsNullOrEmpty(articleFrom.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareFrom) : articleFrom.Text;
+            string textTo = string.IsNullOrEmpty(articleTo.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareTo) : articleTo.Text;
+            diff_match_patch diff = new diff_match_patch();
+            List<Diff> diffs = diff.diff_main(textFrom, textTo);
+            diff.diff_cleanupSemantic(diffs);
+            model.Diff = diff.diff_prettyHtml(diffs);
+
+            return this.View(model);
+        }
+
+        [HttpGet]
+        public ActionResult GetUniqueTags(string query)
+        {
+            var tags = this.articleRepository.ArticleTags.Where(t => t.Tag.StartsWith(query)).Select(t => t.Tag).Distinct().OrderBy(t => t);
+            return this.Json(tags.ToList(), JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult Search(string query)
+        {
+            var model = new ArticleSearchModel
+            {
+                Query = query
+            };
+
+            if (string.IsNullOrEmpty(query))
+            {
+                model.Articles = new ArticleSearchResult[0];
+                model.Tags = new string[0];
+            }
+            else
+            {
+                model.Articles = this.articleRepository.SearchByQuery(query, this.User.Identity);
+                model.Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct();
+            }
+
+            // TODO: remove items where the user does not have read permissions.
+            return this.View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Tagged(string id)
+        {
+            var results = this.articleRepository.SearchByTag(id, this.User.Identity).OrderBy(a => a.Title);
+
+            var model = new ArticleSearchModel()
+            {
+                Articles = results,
+                IsTagSearch = true,
+                Query = id,
+                Tags = new string[0]
+            };
+
+            return this.View("Search", model);
+        }
+
+        [HttpGet]
+        public ActionResult Untagged()
+        {
+            var results = this.articleRepository.SearchByTag(null, this.User.Identity).OrderBy(a => a.Title);
+
+            var model = new ArticleSearchModel()
+            {
+                Articles = results,
+                IsTagSearch = true,
+                Query = string.Empty,
+                Tags = new string[0]
+            };
+
+            return this.View("Search", model);
+        }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public ActionResult Preview(string id, string text)
+        {
+            return this.Json(new
+            {
+                id = id,
+                html = this.htmlConverter.Convert(text)
+            });
         }
 
         private static List<string> SplitTags(string input)
@@ -130,52 +364,6 @@
             }
 
             return tags;
-        }
-
-        [HttpGet]
-        public ActionResult Edit(string id)
-        {
-            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
-            if (article == null)
-            {
-                return HttpNotFound();
-            }
-
-            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
-            {
-                return new HttpUnauthorizedResult();
-            }
-
-            var model = Mapper.Map<ArticleEditModel>(article);
-            model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
-
-            model.Security = new PermissionModel();
-            this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
-
-            return View(model);
-        }
-
-        [HttpPost]
-        [ValidateInput(false)]
-        public ActionResult Edit(ArticleEditModel model)
-        {
-            if (!this.articleRepository.CanModify(this.User, model.ArticleId))
-            {
-                return new HttpUnauthorizedResult();
-            }
-
-            List<string> tags = SplitTags(model.Tags);
-            List<ArticleSecurity> security = PopulateSecurityRecords(model.Security, this.ModelState, this.securityRepository.StandardizeUserId(this.User.Identity.Name), this.securityRepository);
-
-            if (!this.ModelState.IsValid)
-            {
-                return this.View(model);
-            }
-
-            // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
-
-            this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
-            return RedirectToAction("Read", new { id = model.UrlTitle });
         }
 
         private static List<ArticleSecurity> PopulateSecurityRecords(PermissionModel model, ModelStateDictionary modelState, string userId, ISecurityRepository securityRepository)
@@ -238,6 +426,7 @@
                             modelState.AddModelError("Security", "TODO - duplicate");
                         }
                     }
+
                     break;
 
                 default:
@@ -300,6 +489,7 @@
                             modelState.AddModelError("Security", "TODO - duplicate");
                         }
                     }
+
                     break;
 
                 default:
@@ -307,171 +497,6 @@
             }
 
             return security;
-        }
-
-        [HttpGet]
-        public ActionResult History(string id)
-        {
-            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
-            if (article == null)
-            {
-                return HttpNotFound();
-            }
-
-            if (!this.articleRepository.CanView(this.User, article.ArticleId))
-            {
-                return new HttpUnauthorizedResult();
-            }
-
-            var model = Mapper.Map<ArticleHistoryModel>(article);
-            this.SetUpdatedDisplayName(model);
-
-            model.HistoryRecords = (from a in this.articleRepository.Articles
-                                   join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
-                                   where a.UrlTitle == id
-                                   orderby h.Revision descending
-                                   select new ArticleHistoryRecord()
-                                   {
-                                       Revision = h.Revision,
-                                       UpdatedBy = h.UpdatedBy,
-                                       UpdatedDtm = h.UpdatedDtm,
-                                       Comment = h.Comment
-                                   }).ToList();
-
-            foreach (ArticleHistoryRecord record in model.HistoryRecords)
-            {
-                this.SetUpdatedDisplayName(record);
-            }
-
-            return View(model);
-        }
-
-        [HttpGet]
-        public ActionResult Compare(string id, int compareFrom, int compareTo)
-        {
-            Debug.Assert(compareFrom < compareTo, "compareFrom < compareTo");
-            if (compareFrom >= compareTo)
-            {
-                throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
-            }
-
-            ArticleBase article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
-            if (article == null)
-            {
-                return HttpNotFound();
-            }
-
-            if (!this.articleRepository.CanView(this.User, article.ArticleId))
-            {
-                return new HttpUnauthorizedResult();
-            }
-
-            ArticleBase articleFrom = this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareFrom);
-            if (articleFrom == null)
-            {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareFrom), "compareFrom");
-            }
-
-            ArticleBase articleTo = compareTo == article.Revision ? article : this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareTo);
-            if (articleTo == null)
-            {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareTo), "compareTo");
-            }
-
-            var model = new ArticleCompareModel
-            {
-                ArticleId = article.ArticleId,
-                CompareFrom = Mapper.Map<ArticleCompareRecord>(articleFrom),
-                CompareTo = Mapper.Map<ArticleCompareRecord>(articleTo),
-                Title = article.Title,
-                UrlTitle = id
-            };
-
-            this.SetUpdatedDisplayName(model.CompareFrom);
-            this.SetUpdatedDisplayName(model.CompareTo);
-
-            string textFrom = string.IsNullOrEmpty(articleFrom.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareFrom) : articleFrom.Text;
-            string textTo = string.IsNullOrEmpty(articleTo.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareTo) : articleTo.Text;
-            diff_match_patch diff = new diff_match_patch();
-            List<Diff> diffs = diff.diff_main(textFrom, textTo);
-            diff.diff_cleanupSemantic(diffs);
-            model.Diff = diff.diff_prettyHtml(diffs);
-
-            return this.View(model);
-        }
-
-        [HttpGet]
-        public ActionResult GetUniqueTags(string query)
-        {
-            var tags = this.articleRepository.ArticleTags.Where(t => t.Tag.StartsWith(query)).Select(t => t.Tag).Distinct().OrderBy(t => t);
-            return Json(tags.ToList(), JsonRequestBehavior.AllowGet);
-        }
-
-        [HttpGet]
-        public ActionResult Search(string query)
-        {
-            var model = new ArticleSearchModel
-            {
-                Query = query
-            };
-
-            if (string.IsNullOrEmpty(query))
-            {
-                model.Articles = new ArticleSearchResult[0];
-                model.Tags = new string[0];
-            }
-            else
-            {
-                model.Articles = this.articleRepository.SearchByQuery(query, this.User.Identity);
-                model.Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct();
-            }
-
-            // TODO: remove items where the user does not have read permissions.
-
-            return View(model);
-        }
-
-        [HttpGet]
-        public ActionResult Tagged(string id)
-        {
-            var results = this.articleRepository.SearchByTag(id, this.User.Identity).OrderBy(a => a.Title);
-
-            var model = new ArticleSearchModel()
-            {
-                Articles = results,
-                IsTagSearch = true,
-                Query = id,
-                Tags = new string[0]
-            };
-
-            return View("Search", model);
-        }
-
-        [HttpGet]
-        public ActionResult Untagged()
-        {
-            var results = this.articleRepository.SearchByTag(null, this.User.Identity).OrderBy(a => a.Title);
-
-            var model = new ArticleSearchModel()
-            {
-                Articles = results,
-                IsTagSearch = true,
-                Query = string.Empty,
-                Tags = new string[0]
-            };
-
-            return View("Search", model);
-        }
-
-        [HttpPost]
-        [ValidateInput(false)]
-        public ActionResult Preview(string id, string text)
-        {
-            return Json(new
-            {
-                id = id,
-                html = this.htmlConverter.Convert(text)
-            });
         }
 
         private void SetUpdatedDisplayName(IUpdatedArticle article)
@@ -487,4 +512,3 @@
         }
     }
 }
-
