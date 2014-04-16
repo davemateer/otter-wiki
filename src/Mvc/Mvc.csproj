@@ -135,6 +135,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\images\ajax-loader.gif" />
+    <Content Include="Content\images\favicon-16.png" />
+    <Content Include="Content\images\favicon-32.png" />
+    <Content Include="Content\images\favicon.ico" />
     <Content Include="Content\images\logo.png" />
     <Content Include="Content\ListTags.css" />
     <Content Include="Content\main.css" />
