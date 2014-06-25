@@ -1,7 +1,8 @@
 ﻿$(document).ready(function () {
 
-  $('input[type=radio]').on('change', function () {
-    $(this).siblings('input.permission-accounts').prop('disabled', !($(this).hasClass('specified')));
+  $('input[type=radio][data-otter-permission=true]').on('change', function () {
+    var specified = $(this).val() === "Specified";
+    $(this).closest('.form-group').find('input[type=text][data-otter-permission-content=users]').prop('disabled', !specified);
   });
 
   function split(val) {
@@ -12,8 +13,9 @@
     return split(term).pop();
   }
 
-  $("input.permission-accounts")
+  $('input[type=text][data-otter-permission=true][data-otter-permission-content=users]')
     .bind("keydown", function (event) {
+      console.log('keydown');
       if (event.keyCode === $.ui.keyCode.TAB && $(this).data("ui-autocomplete").menu.active) {
         event.preventDefault();
       }
@@ -73,4 +75,29 @@
         return false;
       }
     });
+});
+
+$.validator.setDefaults({
+  highlight: function (element, errorClass, validClass) {
+    if (element.type === 'radio') {
+      this.findByName(element.name).addClass(errorClass).removeClass(validClass);
+    } else {
+      $(element).addClass(errorClass).removeClass(validClass);
+      $(element).closest('.form-group').removeClass('has-success').addClass('has-error');
+    }
+  },
+  unhighlight: function (element, errorClass, validClass) {
+    if (element.type === 'radio') {
+      this.findByName(element.name).removeClass(errorClass).addClass(validClass);
+    } else {
+      $(element).removeClass(errorClass).addClass(validClass);
+      $(element).closest('.form-group').removeClass('has-error').addClass('has-success');
+    }
+  }
+});
+
+$(document).ready(function () {
+  $("span.field-validation-valid, span.field-validation-error").addClass('help-block');
+  $("div.form-group").has("span.field-validation-error").addClass('has-error');
+  $("div.validation-summary-errors").has("li:visible").addClass("alert alert-block alert-danger");
 });

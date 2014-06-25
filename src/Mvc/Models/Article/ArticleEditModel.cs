@@ -33,10 +33,12 @@ namespace Otter.Models
     {
         public int ArticleId { get; set; }
 
+        [Required]
         public string Title { get; set; }
 
         public string UrlTitle { get; set; }
 
+        [Required(ErrorMessage = "The content must be non-empty")]
         public string Text { get; set; }
 
         public int Revision { get; set; }

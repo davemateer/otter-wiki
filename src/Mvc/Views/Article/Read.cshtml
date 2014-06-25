@@ -2,32 +2,40 @@
 @{
   ViewBag.Title = Model.Title;
 }
-<div class="actions no-print">
-  @Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle })
-  @Html.ActionLink("View history", "History", new { id = Model.UrlTitle })
-</div>
-<h1 class="title@{if (Model.Tags.Any()) {<text> with-tags</text>} else {<text> no-tags</text>}}">@ViewBag.Title</h1>
 @if (Model.Tags.Any())
 {
-  <ul class="tags article-tags">
+  <div class="tags">
     @foreach (var tag in Model.Tags)
     {
-      <li>@Html.ActionLink(tag, "Tagged", new { id = tag })</li>
+      <span class="label label-default">@Html.ActionLink(tag, "Tagged", new { id = tag })</span>
     }
-  </ul>
+  </div>
 }
-<div id="article-content">
-  @Html.Raw(Model.Html)
+<h1>@ViewBag.Title</h1>
+<div class="row">
+  <div id="article-content" class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+    @Html.Raw(Model.Html)
+    <p class="text-muted"><small>@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</small></p>
+  </div>
+  <div class="hidden-print col-lg-2 col-md-2 col-sm-3 hidden-xs">
+    <div class="list-group otter-manage-article" data-spy="affix" data-offset-top="100">
+      <div class="list-group-item bg-primary otter-bg-primary">Manage article</div>
+      <a class="list-group-item" href="@Url.Action("Edit", new { id = Model.UrlTitle })"><span class="glyphicon glyphicon-edit"></span>&nbsp;Edit</a>
+      <a class="list-group-item" href="@Url.Action("History", new { id = Model.UrlTitle })"><span class="glyphicon glyphicon-time"></span>&nbsp;View history</a>
+    </div>
+  </div>
 </div>
-<p class="authorship">@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</p>
-@section head
+@section scripts
 {
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />
-  <script type="text/javascript" src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
   <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
     $(document).ready(function () {
       applyContentFormat($("#article-content"));
     });
   </script>
+}
+@section collapsed_navlinks
+{
+<li class="hidden-sm hidden-md hidden-lg">@Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle })</li>
+<li class="hidden-sm hidden-md hidden-lg">@Html.ActionLink("View article history", "History", new { id = Model.UrlTitle })</li>
 }

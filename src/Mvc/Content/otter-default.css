@@ -1,0 +1,82 @@
+﻿/* Put these into custom build of bootstrap */
+
+/* CHANGE NAVBAR COLLAPSE POINT TO SOMETHING LARGER */
+
+.navbar-default {
+  background-color: #34B7B2;
+}
+.navbar {
+  border-radius: 0;
+  border-width: 0;
+}
+.navbar-brand {
+  padding-top: 3px;
+}
+a {
+  text-decoration: underline;
+}
+
+.navbar-default .navbar-nav > li > a {
+  color: #fefefe;
+  text-decoration: none;
+}
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
+  color: #fefefe;
+  background-color: #57CCC7;
+}
+a.btn, a.list-group-item {
+  text-decoration: none;
+}
+
+/* These ones stay */
+footer {
+  display: block;
+  padding: 1em;
+  margin-top: 1em;
+  color: #999;
+  text-align: center;
+  border-top: 3px solid #34B7B2;
+}
+#tag-list {
+  width: 100%;
+  display: table;
+}
+#tag-list ul {
+  display: table-cell;
+  vertical-align: top;
+  list-style-type: none;
+  margin: 0;
+  padding: 0 1em;
+}
+#tag-list li {
+  margin: 10px 0;
+  padding: 0;
+}
+#tag-list ul + ul {
+  border-left: 1px solid #ddd;
+}
+.search-result-details {
+  color: #666;
+  margin: 3px 0 1em 0;
+  font-size: 0.9em;
+  font-style: italic;
+}
+.tags a {
+  color: #fff;
+  text-decoration: none;
+}
+.otter-bg-primary {
+  background-color: #34B7B2;
+}
+.compare.affix, .otter-manage-article.affix {
+  position: fixed;
+  top: 20px;
+}
+.diff, .otter-monospace {
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+.ui-autocomplete-loading {
+  background-image: url('images/ajax-loader.gif');
+  background-position: right center;
+  background-repeat: no-repeat;
+}

@@ -2,25 +2,25 @@
 @{
   ViewBag.Title = string.Format(Model.IsTagSearch ? (string.IsNullOrEmpty(Model.Query) ? "Untagged articles" : "Articles tagged \"{0}\"") : "Search results for \"{0}\"", Model.Query);
 }
-<h1 class="title">@ViewBag.Title</h1>
+<h1>@ViewBag.Title</h1>
 @if (Model.Tags.Any())
 {
-  <h2>Tags:</h2>
-  <ul class="tags">
-    @foreach (var tag in Model.Tags)
-    {
-      <li>@Html.ActionLink(tag, "Tagged", new { id = tag })</li>
-    }
-  </ul>
+  <h2><small>Tags:</small></h2>
+  <div class="tags">
+  @foreach (var tag in Model.Tags)
+  {
+  <span class="label label-default">@Html.ActionLink(tag, "Tagged", new { id = tag })</span>
+  }
+  </div>
 }
 @if (Model.Articles.Any())
 {
-  <h2>@Model.Articles.Count() article(s) returned:</h2>
-  <ul class="search-results-articles">
+  <h2><small>@Model.Articles.Count() article(s) returned:</small></h2>
+  <ul class="list-unstyled">
     @foreach (var article in Model.Articles)
     {
       <li>
-        <div class="search-result-title">@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</div>
+        <div>@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</div>
         <div class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedDtm, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</div>
       </li>
     }
@@ -28,5 +28,5 @@
 }
 else
 {
-  <p>No matching articles could be found.</p>
+  <p class="lead">No matching articles could be found.</p>
 }

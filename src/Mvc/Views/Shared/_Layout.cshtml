@@ -2,45 +2,66 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@ViewBag.Title</title>
   <link rel="icon" href="@Url.Content("~/Content/images/favicon-16.png")" sizes="16x16"/>
   <link rel="icon" href="@Url.Content("~/Content/images/favicon-32.png")" sizes="32x32"/>
   <!--[if IE]><link rel="SHORTCUT ICON" href="@Url.Content("~/Content/images/favicon.ico")"><![endif]-->
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/themes/otter/jquery-ui-1.10.4.custom.min.css")" />
-  <script type="text/javascript">
-    var SITE_ROOT = '@Url.Content("~/")';
-  </script>
-  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.11.0.min.js")"></script>
-  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-ui-1.10.4.custom.min.js")"></script>
-  <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
+  <link rel="stylesheet" href="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.4/themes/black-tie/jquery-ui.css" />
+  <link rel="stylesheet" href="@Url.Content("~/Content/bootstrap.min.css")" />
+  <link rel="stylesheet" href="@Url.Content("~/Content/otter-default.css")" />
   @RenderSection("head", false)
+  <!--[if lt IE 9]>
+  <script src="@(Request.Url.Scheme)://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+  <script src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/respond/1.2.0/respond.js"></script>
+  <![endif]-->
 </head>
 <body>
-  <div class="inner-top top">
-    <div class="header">
-      <div class="header-logo">
-        <a href="@Url.Action("Index", "Article")">
-          <img id="logo" src="@Url.Content("~/Content/images/logo.png")" alt="Otter knowledge base and wiki" /></a>
+  <nav class="navbar navbar-default" role="navigation">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#otter-navbar-actions">
+          <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="@Url.Action("Index", "Article")">
+          <img src="@Url.Content("~/Content/images/logo_white_small.png")" alt="Otter" /></a>
       </div>
-      <div class="header-links">
-        @Html.ActionLink("List articles by tag", "ListTags", "Article", null, new { @class = "normal" })
-        @Html.ActionLink("Create new article", "Create", "Article", null, new { @class = "normal" })
-        @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { id = "search-form" }))
+      <div class="collapse navbar-collapse navbar-right" id="otter-navbar-actions">
+        <ul class="nav navbar-nav">
+          <li>@Html.ActionLink("List articles by tag", "ListTags", "Article")</li>
+          <li>@Html.ActionLink("Create new article", "Create", "Article")</li>
+          @RenderSection("collapsed_navlinks", false)
+        </ul>
+        @using (Html.BeginForm("Search", "Article", FormMethod.Get, new { @class = "navbar-form navbar-right", role = "search", id = "otter-navbar-search-form" }))
         {
-          <input type="text" class="query-search" name="query" />
-          <input type="submit" class="query-submit" value="Search" />
+          <div class="form-group">
+            <input type="text" class="form-control" name="query" />
+          </div>
+          <button type="submit" class="btn btn-default">
+            Search</button>
         }
       </div>
     </div>
-  </div>
+  </nav>
   <div class="main-content">
+  <div class="container">
     @RenderBody()
   </div>
-  <div id="footer">
+  </div>
+  <footer>
     <p>Otter is an open-source, quick-to-deploy, and simple-to-maintain basic knowledge base and wiki, intended for use within Microsoft-centric environments using .Net and SQL Server.</p>
     <p><a href="https://code.google.com/p/otter-wiki/">Get the source</a> | Version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</p>
-  </div>
+  </footer>
+  <script type="text/javascript">
+    var SITE_ROOT = '@Url.Content("~/")';
+  </script>
+  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.4/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/jquery.validate.min.js"></script>
+  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/mvc/3.0/jquery.validate.unobtrusive.min.js"></script>
+  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/bootstrap/3.1.1/bootstrap.min.js"></script>
+  <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
+  @RenderSection("scripts", false)
 </body>
 </html>

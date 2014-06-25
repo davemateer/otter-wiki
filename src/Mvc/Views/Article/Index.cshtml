@@ -1,41 +1,45 @@
 ﻿@{
-  Layout = null;
+  ViewBag.Title = "Otter knowledge base and wiki";
 }
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width" />
-  <title>Home</title>
-  <link rel="icon" href="@Url.Content("~/Content/images/favicon-16.png")" sizes="16x16"/>
-  <link rel="icon" href="@Url.Content("~/Content/images/favicon-32.png")" sizes="32x32"/>
-  <!--[if IE]><link rel="SHORTCUT ICON" href="@Url.Content("~/Content/images/favicon.ico")"><![endif]-->
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/main.css")" />
-  <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-1.11.0.min.js")"></script>
-</head>
-<body>
-  <div class="home-top top">
-    <div class="header">
-      <div class="header-logo">
-        <img id="logo" src="@Url.Content("~/Content/images/logo.png")" alt="Otter knowledge base and wiki" />
-      </div>
-      <div class="header-links">
-        @Html.ActionLink("List articles by tag", "ListTags", "Article", null, new { @class = "normal" })
-        @Html.ActionLink("Create new article", "Create", "Article", null, new { @class = "button" })
-      </div>
-    </div>
-    <div class="home-tagline">Search the knowledge base:</div>
-    @using (Html.BeginForm("Search", "Article", FormMethod.Get))
-    {
-      <div class="home-search">
-        <input id="home-query" type="text" name="query" autofocus />
-        <input id="home-submit" type="submit" value="Search" />
-      </div>
+<h1>Search the knowledge base</h1>
+@using (Html.BeginForm("Search", "Article", FormMethod.Get, new { @class = "form-inline", role = "form" }))
+{
+  <div class="search">
+    <input type="text" name="query" class="form-control" autofocus />
+    <button type="submit" class="btn btn-primary">Search</button>
+  </div>
+}
+@section head
+{
+  <style type="text/css">
+    nav.navbar {
+      margin-bottom: 0;
     }
-  </div>
-  <div class="home-footer">
-    <p>Otter is an open-source, quick-to-deploy, and simple-to-maintain basic knowledge base and wiki, intended for use within Microsoft-centric environments using .Net and SQL Server.</p>
-    <p><a href="https://code.google.com/p/otter-wiki/">Get the source</a> | Version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</p>
-  </div>
-</body>
-</html>
+    footer {
+      margin-top: 0;
+    }
+    .main-content {
+      background-color: #34B7B2;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin: 100px 0 0.5em 0;
+      font-weight: normal;
+    }
+    .search {
+      margin-bottom: 100px;
+      text-align: center;
+      display: block;
+    }
+    #otter-navbar-search-form {
+      display: none;
+      visibility: collapse;
+    }
+    @@media (min-width: 768px) {
+      .form-control {
+        width: 300px !important;
+      }
+    }
+  </style>
+}

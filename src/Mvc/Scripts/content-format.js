@@ -14,19 +14,23 @@
 
 var applyContentFormat = function (target) {
 
-  target.find('code').addClass("prettyprint");
+  // target.find('code').addClass("prettyprint");
 
-  target.find('pre > code').parent().each(function (index) {
-    $(this).addClass("prettyprint");
-    $(this).attr('id', 'codeblock-' + index);
-    $(this).after($('<a/>', {
-      href: "javascript:selectCode('codeblock-" + index + "')",
-      text: "Select code",
-      "class": "select-all"
-    }))
+  target.find('pre > code').each(function (index) {
+    // $(this).addClass("prettyprint");
+    $(this).attr('id', 'codeBlock-' + index);
+
+    var selector = $('<button/>', {
+      "type": 'button',
+      "click": function () { selectCode('codeBlock-' + index); },
+      "class": 'select-all btn btn-default btn-xs pull-right hidden-print',
+      "text": 'Select'
+    });
+
+    $(this).parent().prepend(selector);
   });
 
-  prettyPrint();
+  // prettyPrint();
 
-  target.find('table').addClass('content-table');
+  target.find('table').addClass('table table-condensed table-bordered');
 };
