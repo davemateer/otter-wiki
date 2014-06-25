@@ -31,6 +31,7 @@ namespace Otter.Controllers
     using System.DirectoryServices.AccountManagement;
     using System.Globalization;
     using System.Linq;
+    using System.Text.RegularExpressions;
     using System.Web.Mvc;
     using AutoMapper;
     using DiffMatchPatch;
@@ -62,7 +63,7 @@ namespace Otter.Controllers
         public ActionResult ListTags()
         {
             var articles = this.articleRepository.GetTagSummary(this.User.Identity);
-            var model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
+            IEnumerable<ArticleListTagsRecord> model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
             return this.View(model);
         }
 
@@ -264,7 +265,13 @@ namespace Otter.Controllers
             diff_match_patch diff = new diff_match_patch();
             List<Diff> diffs = diff.diff_main(textFrom, textTo);
             diff.diff_cleanupSemantic(diffs);
-            model.Diff = diff.diff_prettyHtml(diffs);
+            string html = diff.diff_prettyHtml(diffs);
+
+            // Attempt to preserve leading spaces. CSS "white-space: pre-wrap" does not work because it breaks at both the
+            // <br> and the &para;
+            html = Regex.Replace(html, @"(?<=<br>)(?<spaces> +)", m => string.Concat(Enumerable.Repeat("&nbsp;", m.Groups["spaces"].Length)));
+
+            model.Diff = html;
 
             return this.View(model);
         }

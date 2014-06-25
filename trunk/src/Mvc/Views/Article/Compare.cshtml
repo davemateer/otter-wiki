@@ -2,55 +2,49 @@
 @{
   ViewBag.Title = string.Format("Comparison of \"{0},\" versions {1} and {2}", Model.Title, Model.CompareFrom.Revision, Model.CompareTo.Revision);
 }
-<h1 class="title">@Model.Title</h1>
-<div style="margin-bottom: 2em">@Html.ActionLink("View history", "History", new { id = Model.UrlTitle }) | @Html.ActionLink("View latest version", "Read", new { id = Model.UrlTitle })</div>
-<table>
-  <tr>
-    <td class="compare-from">
-      <div style="font-weight: bold">Revision @Model.CompareFrom.Revision</div>
-      <div>Updated: @Model.CompareFrom.UpdatedDtm.ToString("g")</div>
-      <div>Updated by: @(string.IsNullOrEmpty(Model.CompareFrom.UpdatedBy) ? string.Empty : Model.CompareFrom.UpdatedByDisplayName ?? Model.CompareFrom.UpdatedBy)</div>
-      @if (!string.Equals(Model.Title, Model.CompareFrom.Title, StringComparison.CurrentCulture))
-      {
-        <div>Title was: @Model.CompareFrom.Title</div>
-      }
-      @if (!string.IsNullOrEmpty(Model.CompareFrom.Comment))
-      {
-        <div>Comment: @Model.CompareFrom.Comment</div>
-      }
-      <div>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = Model.CompareFrom.Revision })</div>
-    </td>
-    <td class="compare-to">
-      <div style="font-weight: bold">Revision @Model.CompareTo.Revision</div>
-      <div>Updated: @Model.CompareTo.UpdatedDtm.ToString("g")</div>
-      <div>Updated by: @(string.IsNullOrEmpty(Model.CompareTo.UpdatedBy) ? string.Empty : Model.CompareTo.UpdatedByDisplayName ?? Model.CompareTo.UpdatedBy)</div>
-      @if (!string.Equals(Model.Title, Model.CompareTo.Title, StringComparison.CurrentCulture))
-      {
-        <div>Title was: @Model.CompareTo.Title</div>
-      }
-      @if (!string.IsNullOrEmpty(Model.CompareTo.Comment))
-      {
-        <div>Comment: @Model.CompareTo.Comment</div>
-      }
-      <div>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = Model.CompareTo.Revision })</div>
-    </td>
-  </tr>
-</table>
-<div class="diff">
-  @Html.Raw(Model.Diff)
+<h1>@Model.Title</h1>
+<div style="margin-bottom: 2em">
+  @Html.ActionLink("View history", "History", new { id = Model.UrlTitle }, new { @class = "btn btn-default" })
+  @Html.ActionLink("View latest version", "Read", new { id = Model.UrlTitle }, new { @class = "btn btn-default" })
 </div>
-@section head
-{
-  <style type="text/css">
-    td.compare-to, td.compare-from {
-      vertical-align: top;
-    }
-    td.compare-to {
-      padding-left: 100px;
-    }
-    .diff {
-      font-family: Consolas, Monospace;
-      margin-top: 1em;
-    }
-  </style>
-}
+<div class="row">
+  <div class="col-sm-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">@Html.ActionLink(string.Format("Version {0}", @Model.CompareFrom.Revision), "Read", new { id = Model.UrlTitle, revision = Model.CompareFrom.Revision })</div>
+      <div class="panel-body">
+        <div>Updated: @Model.CompareFrom.UpdatedDtm.ToString("g")</div>
+        <div>Updated by: @(string.IsNullOrEmpty(Model.CompareFrom.UpdatedBy) ? string.Empty : Model.CompareFrom.UpdatedByDisplayName ?? Model.CompareFrom.UpdatedBy)</div>
+        @if (!string.Equals(Model.Title, Model.CompareFrom.Title, StringComparison.CurrentCulture))
+        {
+          <div>Title was: @Model.CompareFrom.Title</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.CompareFrom.Comment))
+        {
+          <div>Comment: @Model.CompareFrom.Comment</div>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        @Html.ActionLink(string.Format("Version {0}", @Model.CompareTo.Revision), "Read", new { id = Model.UrlTitle, revision = Model.CompareTo.Revision })
+      </div>
+      <div class="panel-body">
+        <div>Updated: @Model.CompareTo.UpdatedDtm.ToString("g")</div>
+        <div>Updated by: @(string.IsNullOrEmpty(Model.CompareTo.UpdatedBy) ? string.Empty : Model.CompareTo.UpdatedByDisplayName ?? Model.CompareTo.UpdatedBy)</div>
+        @if (!string.Equals(Model.Title, Model.CompareTo.Title, StringComparison.CurrentCulture))
+        {
+          <div>Title was: @Model.CompareTo.Title</div>
+        }
+        @if (!string.IsNullOrEmpty(Model.CompareTo.Comment))
+        {
+          <div>Comment: @Model.CompareTo.Comment</div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+<div class="diff">
+@Html.Raw(Model.Diff)
+</div>

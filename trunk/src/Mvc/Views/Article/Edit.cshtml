@@ -2,58 +2,55 @@
 @{
   ViewBag.Title = Model.IsNewArticle ? "Create new article" : Model.Title;
 }
-<h1 class="title">@ViewBag.Title</h1>
-@using (Html.BeginForm(Model.IsNewArticle ? "Create" : "Edit", "Article", FormMethod.Post, new { id = "edit-form" }))
+<h1>@ViewBag.Title</h1>
+@using (Html.BeginForm(Model.IsNewArticle ? "Create" : "Edit", "Article", FormMethod.Post, new { id = "edit-form", role = "form" }))
 {
-  <div class="editor-label">@Html.LabelFor(m => m.Title):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Title) @Html.ValidationMessageFor(m => m.Title)</div>
-  <div class="editor-label">
-    Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</div>
-  @*<div><button id="add-image">Add image</button></div>*@
-  <div>@Html.ValidationMessageFor(m => m.Text)</div>
-  <div class="editor-field">@Html.TextAreaFor(m => m.Text)</div>
-  <div class="editor-label">Preview:</div>
-  <div id="Preview"></div>
-  <div class="editor-label">@Html.LabelFor(m => m.Security):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Security) @Html.ValidationMessageFor(m => m.Security)</div>
-  <div class="editor-label">@Html.LabelFor(m => m.Tags):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Tags) @Html.ValidationMessageFor(m => m.Tags)</div>
+  <div class="form-group">
+    @Html.LabelFor(m => m.Title):
+    @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+    @Html.ValidationMessageFor(m => m.Title)
+  </div>
+  <div class="form-group">
+    <label for="Text">Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</label>
+    @Html.TextAreaFor(m => m.Text, new { @class = "form-control otter-monospace", rows = 10 })
+    @Html.ValidationMessageFor(m => m.Text)
+  </div>
+  <label>Preview:</label>
+  <div id="Preview">
+  </div>
+  @Html.EditorFor(m => m.Security)
+  @Html.ValidationMessageFor(m => m.Security)
+  <div class="form-group">
+    @Html.LabelFor(m => m.Tags):
+    @Html.TextBoxFor(m => m.Tags, new { @class = "form-control" })
+    @Html.ValidationMessageFor(m => m.Tags)
+  </div>
   if (!Model.IsNewArticle)
   {
-  <div class="editor-label">@Html.LabelFor(m => m.Comment):</div>
-  <div class="editor-field">@Html.EditorFor(m => m.Comment) @Html.ValidationMessageFor(m => m.Comment)</div>
+  <div class="form-group">
+    @Html.LabelFor(m => m.Comment):
+    @Html.TextBoxFor(m => m.Comment, new { @class = "form-control" })
+    @Html.ValidationMessageFor(m => m.Comment)
+  </div>
   @Html.HiddenFor(m => m.ArticleId)
   @Html.HiddenFor(m => m.UpdatedBy)
   @Html.HiddenFor(m => m.UpdatedDtm)
   @Html.HiddenFor(m => m.Revision)
   @Html.HiddenFor(m => m.UrlTitle)
   }
-  <div class="edit-actions">
-    <input type="submit" value="@(Model.IsNewArticle ? "Save" : "Save changes")" class="submit-button" />
-    @if (Model.IsNewArticle)
-    {
-      @Html.ActionLink("Cancel", "Index", null, new { @class = "cancel-button" })
-    }
-    else
-    {
-      @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "cancel-button" })
-    }
-  </div>
+  <button type="submit" value="" class="btn btn-primary">@(Model.IsNewArticle ? "Save" : "Save changes")</button>
+  if (Model.IsNewArticle)
+  {
+    @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-default" })
+  }
+  else
+  {
+    @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "btn btn-default" })
+  }
 }
 @section head
 {
-  <link type="text/css" rel="Stylesheet" href="@Url.Content("~/Content/Prettify/prettify.css")" />
   <style type="text/css">
-    textarea#Text {
-      width: 100%;
-      height: 250px;
-    }
-    #Title, #Tags, #Comment {
-      width: 450px;
-    }
-    div.edit-actions {
-      margin-top: 1em;
-    }
     .loading {
       background-color: #aaa;
       filter: alpha(opacity=50);
@@ -66,9 +63,12 @@
       padding: 5px;
       height: 250px;
       overflow-y: scroll;
+      margin-bottom: 1em;
     }
   </style>
-  <script type="text/javascript" src="@Url.Content("~/Scripts/Prettify/prettify.js")"></script>
+}
+@section scripts
+  {
   <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
 
