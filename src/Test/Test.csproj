@@ -83,13 +83,13 @@
     <Compile Include="UtilityTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Mvc\Otter.csproj">
+    <None Include="app.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Otter\Otter.csproj">
       <Project>{a27e6ab3-33c6-40ff-a8f6-aa3f65cc810e}</Project>
       <Name>Otter</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

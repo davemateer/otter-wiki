@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{69F21156-9C56-4881-81EF-6E03B6925341}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Otter", "Mvc\Otter.csproj", "{A27E6AB3-33C6-40FF-A8F6-AA3F65CC810E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Otter", "Otter\Otter.csproj", "{A27E6AB3-33C6-40FF-A8F6-AA3F65CC810E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

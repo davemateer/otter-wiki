@@ -3,3 +3,5 @@ src/packages/
 src/Test/bin/
 src/Test/obj/
 src/Mvc/bin/
+src/Otter/bin/
+src/Otter/obj/

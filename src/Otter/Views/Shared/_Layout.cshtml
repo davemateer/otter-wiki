@@ -25,7 +25,7 @@
   <meta name="msapplication-TileImage" content="~/Content/favicon/mstile-144x144.png">
   <meta name="msapplication-config" content="~/Content/favicon/browserconfig.xml">
   <meta name="theme-color" content="#ffffff">
-  @Styles.Render("~/css/common")
+  @Styles.Render("~/bundles/css/common")
   @RenderSection("head", false)
 </head>
 <body>
@@ -69,7 +69,7 @@
   <script type="text/javascript">
     var SITE_ROOT = '@Url.Content("~/")';
   </script>
-  @Scripts.Render("~/scripts/common")
+  @Scripts.Render("~/bundles/scripts/common")
   @RenderSection("scripts", false)
 </body>
 </html>

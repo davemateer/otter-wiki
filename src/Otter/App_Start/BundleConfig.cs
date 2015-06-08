@@ -31,8 +31,9 @@ namespace Otter
     {
         public static void RegisterBundles(BundleCollection bundles)
         {
-            bundles.Add(new ScriptBundle("~/scripts/common").Include("~/Scripts/jquery-{version}.js", "~/Scripts/bootstrap.js", "~/Scripts/jquery-ui.js", "~/Scripts/jquery.validate.js", "~/Scripts/jquery.validate.unobtrusive.js", "~/Scripts/main.js"));
-            bundles.Add(new StyleBundle("~/css/common").Include("~/Content/jquery-ui.css", "~/Content/bootstrap.css", "~/Content/bootstrap-theme.css", "~/Content/otter.css"));
+            bundles.Add(new ScriptBundle("~/bundles/scripts/common").Include("~/Scripts/jquery-{version}.js", "~/Scripts/bootstrap.js", "~/Scripts/jquery-ui.js", "~/Scripts/jquery.validate.js", "~/Scripts/jquery.validate.unobtrusive.js", "~/Scripts/main.js"));
+            bundles.Add(new StyleBundle("~/bundles/css/common").Include("~/Content/jquery-ui.css", "~/Content/bootstrap.css", "~/Content/bootstrap-theme.css", "~/Content/otter.css"));
+            BundleTable.EnableOptimizations = true;
         }
     }
 }
