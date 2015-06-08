@@ -1,7 +1,7 @@
 ﻿namespace Test
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Otter.Infrastructure;
+    using Otter;
 
     [TestClass]
     public class SluggifierTest

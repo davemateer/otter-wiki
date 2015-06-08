@@ -30,9 +30,9 @@ namespace Otter.Repository
 
     public interface ISecurityRepository
     {
-        IEnumerable<SecurityEntity> Search(string query);
-
         SecurityEntity Find(string value, SecurityEntityTypes option);
+
+        IEnumerable<SecurityEntity> Search(string query);
 
         string StandardizeUserId(string userId);
     }

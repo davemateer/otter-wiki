@@ -33,22 +33,22 @@ namespace Otter.Models
     {
         public int ArticleId { get; set; }
 
-        public string Title { get; set; }
-
-        public string UrlTitle { get; set; }
-
         public string Html { get; set; }
 
         public int Revision { get; set; }
 
-        public DateTime UpdatedDtm { get; set; }
+        [IgnoreMap]
+        public IEnumerable<string> Tags { get; set; }
+
+        public string Title { get; set; }
 
         public string UpdatedBy { get; set; }
 
         [IgnoreMap]
         public string UpdatedByDisplayName { get; set; }
 
-        [IgnoreMap]
-        public IEnumerable<string> Tags { get; set; }
+        public DateTime UpdatedDtm { get; set; }
+
+        public string UrlTitle { get; set; }
     }
 }

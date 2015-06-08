@@ -33,31 +33,31 @@ namespace Otter.Models
     {
         public int ArticleId { get; set; }
 
-        [Required]
-        public string Title { get; set; }
-
-        public string UrlTitle { get; set; }
-
-        [Required(ErrorMessage = "The content must be non-empty")]
-        public string Text { get; set; }
-
-        public int Revision { get; set; }
-
-        public DateTime UpdatedDtm { get; set; }
-
-        public string UpdatedBy { get; set; }
-
-        [IgnoreMap]
-        public bool IsNewArticle { get; set; }
-
         [IgnoreMap]
         [Display(Name = "Reason for change")]
         public string Comment { get; set; }
 
         [IgnoreMap]
-        public string Tags { get; set; }
+        public bool IsNewArticle { get; set; }
+
+        public int Revision { get; set; }
 
         [IgnoreMap]
         public PermissionModel Security { get; set; }
+
+        [IgnoreMap]
+        public string Tags { get; set; }
+
+        [Required(ErrorMessage = "The content must be non-empty")]
+        public string Text { get; set; }
+
+        [Required]
+        public string Title { get; set; }
+
+        public string UpdatedBy { get; set; }
+
+        public DateTime UpdatedDtm { get; set; }
+
+        public string UrlTitle { get; set; }
     }
 }

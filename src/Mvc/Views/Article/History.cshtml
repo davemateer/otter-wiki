@@ -29,8 +29,8 @@
             <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
             <td>&nbsp;</td>
             <td>
-              <input type="radio" name="compareTo" value="@Model.Revision" checked="checked"@{ if (!Model.HistoryRecords.Any())
-                                                                                               { <text>disabled="disabled"</text> } }/></td>
+              <input type="radio" name="compareTo" value="@Model.Revision" checked="checked" @{ if (!Model.HistoryRecords.Any()) { <text> disabled="disabled" </text>  } } />
+            </td>
           </tr>
           @for (int i = 0; i < Model.HistoryRecords.Count(); i++)
           {
@@ -42,8 +42,8 @@
               <td>@record.Comment</td>
               <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
               <td>
-                <input type="radio" name="compareFrom" value="@record.Revision"@{ if (record.Revision == penultimateRevision)
-                                                                                  { <text>checked="checked"</text> } } /></td>
+                <input type="radio" name="compareFrom" value="@record.Revision" @{ if (record.Revision == penultimateRevision) { <text> checked="checked" </text>  } } />
+              </td>
               <td>
                 @if (i < Model.HistoryRecords.Count() - 1)
                 {
@@ -57,11 +57,11 @@
     </div>
     if (Model.HistoryRecords.Any())
     {
-    <div class="col-md-3">
-    <div class="compare" data-spy="affix" data-offset-top="100">
-      <button type="submit" class="btn btn-primary">Compare versions</button>
-    </div>
-    </div>
+      <div class="col-md-3">
+        <div class="compare" data-spy="affix" data-offset-top="100">
+          <button type="submit" class="btn btn-primary">Compare versions</button>
+        </div>
+      </div>
     }
   }
 </div>

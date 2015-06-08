@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace Otter.Infrastructure
+namespace Otter
 {
     using System;
     using System.Collections.Generic;
@@ -31,8 +31,8 @@ namespace Otter.Infrastructure
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml;
+    using CommonMark;
     using HtmlAgilityPack;
-    using MarkdownSharp;
 
     public sealed class MarkdownConverter : ITextToHtmlConverter
     {
@@ -40,9 +40,8 @@ namespace Otter.Infrastructure
 
         public string Convert(string plainText)
         {
-            var markdown = new Markdown();
             string html = Regex.Replace(plainText, @"^\s*\{\|.*?\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
-            html = markdown.Transform(html);
+            html = CommonMarkConverter.Convert(html);
             html = Purify(html);
             return html;
         }
@@ -82,6 +81,48 @@ namespace Otter.Infrastructure
             return list;
         }
 
+        private static string Purify(string html)
+        {
+            var document = new HtmlDocument();
+            document.LoadHtml(html);
+            PurifyNode(document.DocumentNode);
+            return document.DocumentNode.WriteTo().Trim();
+        }
+
+        private static void PurifyNode(HtmlNode node)
+        {
+            if (node.NodeType == HtmlNodeType.Element && node.HasAttributes)
+            {
+                string[] allowedAttributes = Whitelist[node.Name];
+
+                if (allowedAttributes == null || allowedAttributes.Length == 0)
+                {
+                    node.Attributes.RemoveAll();
+                }
+
+                // Remove invalid attributes.
+                for (int i = node.Attributes.Count() - 1; i >= 0; i--)
+                {
+                    if (!allowedAttributes.Contains(node.Attributes[i].Name))
+                    {
+                        node.Attributes.RemoveAt(i);
+                    }
+                }
+            }
+
+            // Purify all child nodes.
+            var childrenToRemove = node.ChildNodes.Where(n => n.NodeType == HtmlNodeType.Element && !Whitelist.ContainsKey(n.Name)).ToArray();
+            for (int i = 0; i < childrenToRemove.Length; i++)
+            {
+                node.RemoveChild(childrenToRemove[i], false);
+            }
+
+            foreach (var child in node.ChildNodes)
+            {
+                PurifyNode(child);
+            }
+        }
+
         private static string RenderTable(Match match)
         {
             var cellContent = new StringBuilder();
@@ -91,7 +132,7 @@ namespace Otter.Infrastructure
 
             var context = new Stack<string>();
 
-            var table = new StringBuilder();
+            var table = new StringBuilder(Environment.NewLine);
             var settings = new XmlWriterSettings();
             settings.OmitXmlDeclaration = true;
             var writer = XmlWriter.Create(table, settings);
@@ -279,7 +320,7 @@ namespace Otter.Infrastructure
             }
 
             writer.Flush();
-            return table.ToString();
+            return table.AppendLine().ToString();
         }
 
         private static void WriteCellContent(XmlWriter writer, StringBuilder content, Stack<string> context)
@@ -296,56 +337,13 @@ namespace Otter.Infrastructure
             }
             else
             {
-                var markdown = new Markdown();
-                html = markdown.Transform(content.ToString()).TrimEnd(null);
+                html = CommonMarkConverter.Convert(content.ToString()).TrimEnd(null);
             }
 
             writer.WriteRaw(html);
             content.Clear();
             writer.WriteEndElement();  // td or th
             context.Pop();
-        }
-
-        private static string Purify(string html)
-        {
-            var document = new HtmlDocument();
-            document.LoadHtml(html);
-            PurifyNode(document.DocumentNode);
-            return document.DocumentNode.WriteTo().Trim();
-        }
-
-        private static void PurifyNode(HtmlNode node)
-        {
-            if (node.NodeType == HtmlNodeType.Element && node.HasAttributes)
-            {
-                string[] allowedAttributes = Whitelist[node.Name];
-
-                if (allowedAttributes == null || allowedAttributes.Length == 0)
-                {
-                    node.Attributes.RemoveAll();
-                }
-
-                // Remove invalid attributes.
-                for (int i = node.Attributes.Count() - 1; i >= 0; i--)
-                {
-                    if (!allowedAttributes.Contains(node.Attributes[i].Name))
-                    {
-                        node.Attributes.RemoveAt(i);
-                    }
-                }
-            }
-
-            // Purify all child nodes.
-            var childrenToRemove = node.ChildNodes.Where(n => n.NodeType == HtmlNodeType.Element && !Whitelist.ContainsKey(n.Name)).ToArray();
-            for (int i = 0; i < childrenToRemove.Length; i++)
-            {
-                node.RemoveChild(childrenToRemove[i], false);
-            }
-
-            foreach (var child in node.ChildNodes)
-            {
-                PurifyNode(child);
-            }
         }
     }
 }

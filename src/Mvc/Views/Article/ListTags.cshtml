@@ -11,25 +11,27 @@
   <ul>
     @foreach (ArticleListTagsRecord item in Model)
     {
-      <li><span class="tag-name">
-        @if (string.IsNullOrEmpty(item.Tag))
-        {
-          @Html.ActionLink("(Untagged)", "Untagged")
-        }
-        else
-        {
-          @Html.ActionLink(item.Tag, "Tagged", new { id = item.Tag })
-        }
-      </span><span class="tag-count badge">@item.Count.ToString("N0")</span></li>
+      <li>
+        <span class="tag-name">
+          @if (string.IsNullOrEmpty(item.Tag))
+          {
+            @Html.ActionLink("(Untagged)", "Untagged")
+          }
+          else
+          {
+            @Html.ActionLink(item.Tag, "Tagged", new { id = item.Tag })
+          }
+        </span><span class="tag-count badge">@item.Count.ToString("N0")</span>
+      </li>
     }
   </ul>
 </div>
 @section scripts
   {
   <script type="text/javascript">
-  var OTTER_MIN_WIDTH_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumColumnWidth"];
-  var OTTER_MIN_ITEMS_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumItemsPerColumn"];
-  var OTTER_MAX_COLUMNS = Math.ceil(@Model.Count() / OTTER_MIN_ITEMS_PER_COLUMN);
+    var OTTER_MIN_WIDTH_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumColumnWidth"];
+    var OTTER_MIN_ITEMS_PER_COLUMN = @System.Configuration.ConfigurationManager.AppSettings["otter:ListByTagMinimumItemsPerColumn"];
+    var OTTER_MAX_COLUMNS = Math.ceil(@Model.Count() / OTTER_MIN_ITEMS_PER_COLUMN);
   </script>
   <script type="text/javascript" src="@Url.Content("~/Scripts/ListTags.js")"></script>
 }

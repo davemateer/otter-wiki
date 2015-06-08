@@ -34,43 +34,9 @@ namespace Otter.Repository
 
     public sealed class SecurityRepository : ISecurityRepository
     {
-        // Using ConcurrentDictionary because a new instance is created per request, but we are sharing this dictionary across instances.
+        // Using ConcurrentDictionary because a new instance is created per request, but we are
+        // sharing this dictionary across instances.
         private static readonly ConcurrentDictionary<string, SecurityEntity> LdapCache = new ConcurrentDictionary<string, SecurityEntity>();
-
-        public IEnumerable<SecurityEntity> Search(string query)
-        {
-            // Safe, but restrictive white-list method of preventing LDAP injection. If other characters are ever needed (accents, etc.),
-            // this may need extended. This removes leading and trailing spaces and anything other than the 26 letters of the English alphabet, 
-            // 0-9 numbers, and embedded spaces.
-            query = Regex.Replace(query.Trim(), "[^A-Za-z0-9 ]", string.Empty);
-
-            var matches = new List<SecurityEntity>();
-
-            using (var searcher = new DirectorySearcher())
-            {
-                searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(|(givenName={0}*)(sn={0}*)(displayName={0}*)(sAMAccountName={0}*)))", query);
-
-                using (SearchResultCollection results = searcher.FindAll())
-                {
-                    foreach (SearchResult found in results)
-                    {
-                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.User));
-                    }
-                }
-
-                searcher.Filter = string.Format("(&(objectCategory=group)(|(cn={0}*)(displayName={0}*)(sAMAccountName={0}*)))", query);
-
-                using (SearchResultCollection results = searcher.FindAll())
-                {
-                    foreach (SearchResult found in results)
-                    {
-                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.Group));
-                    }
-                }
-            }
-
-            return matches;
-        }
 
         public SecurityEntity Find(string value, SecurityEntityTypes option)
         {
@@ -87,7 +53,8 @@ namespace Otter.Repository
             {
                 string query = null;
 
-                // If we are searching only for a group, the exact group id is expected to be the parameter value.
+                // If we are searching only for a group, the exact group id is expected to be the
+                // parameter value.
                 if (option == SecurityEntityTypes.Group)
                 {
                     query = value;
@@ -124,7 +91,8 @@ namespace Otter.Repository
             {
                 string query = null;
 
-                // If we are searching only for a user, the exact user id is expected to be the parameter value.
+                // If we are searching only for a user, the exact user id is expected to be the
+                // parameter value.
                 if (option == SecurityEntityTypes.User)
                 {
                     query = value;
@@ -137,7 +105,7 @@ namespace Otter.Repository
                         query = entity.EntityId;
                     }
                 }
-                
+
                 if (!string.IsNullOrEmpty(query))
                 {
                     using (var searcher = new DirectorySearcher())
@@ -196,6 +164,42 @@ namespace Otter.Repository
 
                 return null;
             }
+        }
+
+        public IEnumerable<SecurityEntity> Search(string query)
+        {
+            // Safe, but restrictive white-list method of preventing LDAP injection. If other
+            // characters are ever needed (accents, etc.), this may need extended. This removes
+            // leading and trailing spaces and anything other than the 26 letters of the English
+            // alphabet, 0-9 numbers, and embedded spaces.
+            query = Regex.Replace(query.Trim(), "[^A-Za-z0-9 ]", string.Empty);
+
+            var matches = new List<SecurityEntity>();
+
+            using (var searcher = new DirectorySearcher())
+            {
+                searcher.Filter = string.Format("(&(objectCategory=person)(objectClass=user)(|(givenName={0}*)(sn={0}*)(displayName={0}*)(sAMAccountName={0}*)))", query);
+
+                using (SearchResultCollection results = searcher.FindAll())
+                {
+                    foreach (SearchResult found in results)
+                    {
+                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.User));
+                    }
+                }
+
+                searcher.Filter = string.Format("(&(objectCategory=group)(|(cn={0}*)(displayName={0}*)(sAMAccountName={0}*)))", query);
+
+                using (SearchResultCollection results = searcher.FindAll())
+                {
+                    foreach (SearchResult found in results)
+                    {
+                        matches.Add(SecurityEntity.FromSearchResult(found, SecurityEntityTypes.Group));
+                    }
+                }
+            }
+
+            return matches;
         }
 
         public string StandardizeUserId(string userId)

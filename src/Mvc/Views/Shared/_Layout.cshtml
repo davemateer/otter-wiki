@@ -5,17 +5,28 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>@ViewBag.Title</title>
-  <link rel="icon" href="@Url.Content("~/Content/images/favicon-16.png")" sizes="16x16"/>
-  <link rel="icon" href="@Url.Content("~/Content/images/favicon-32.png")" sizes="32x32"/>
-  <!--[if IE]><link rel="SHORTCUT ICON" href="@Url.Content("~/Content/images/favicon.ico")"><![endif]-->
-  <link rel="stylesheet" href="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.4/themes/black-tie/jquery-ui.css" />
-  <link rel="stylesheet" href="@Url.Content("~/Content/bootstrap.min.css")" />
-  <link rel="stylesheet" href="@Url.Content("~/Content/otter-default.css")" />
+  <link rel="apple-touch-icon" sizes="57x57" href="~/Content/favicon/apple-touch-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="~/Content/favicon/apple-touch-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="~/Content/favicon/apple-touch-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="~/Content/favicon/apple-touch-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="~/Content/favicon/apple-touch-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="~/Content/favicon/apple-touch-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="~/Content/favicon/apple-touch-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="~/Content/favicon/apple-touch-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="~/Content/favicon/apple-touch-icon-180x180.png">
+  <link rel="icon" type="image/png" href="~/Content/favicon/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="~/Content/favicon/favicon-194x194.png" sizes="194x194">
+  <link rel="icon" type="image/png" href="~/Content/favicon/favicon-96x96.png" sizes="96x96">
+  <link rel="icon" type="image/png" href="~/Content/favicon/android-chrome-192x192.png" sizes="192x192">
+  <link rel="icon" type="image/png" href="~/Content/favicon/favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="~/Content/favicon/manifest.json">
+  <link rel="shortcut icon" href="~/Content/favicon/favicon.ico">
+  <meta name="msapplication-TileColor" content="#00aba9">
+  <meta name="msapplication-TileImage" content="~/Content/favicon/mstile-144x144.png">
+  <meta name="msapplication-config" content="~/Content/favicon/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
+  @Styles.Render("~/css/common")
   @RenderSection("head", false)
-  <!--[if lt IE 9]>
-  <script src="@(Request.Url.Scheme)://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-  <script src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/respond/1.2.0/respond.js"></script>
-  <![endif]-->
 </head>
 <body>
   <nav class="navbar navbar-default" role="navigation">
@@ -25,7 +36,8 @@
           <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="@Url.Action("Index", "Article")">
-          <img src="@Url.Content("~/Content/images/logo_white_small.png")" alt="Otter" /></a>
+          <img src="@Url.Content("~/Content/images/logo_white_small.png")" alt="Otter" />
+        </a>
       </div>
       <div class="collapse navbar-collapse navbar-right" id="otter-navbar-actions">
         <ul class="nav navbar-nav">
@@ -39,29 +51,25 @@
             <input type="text" class="form-control" name="query" />
           </div>
           <button type="submit" class="btn btn-default">
-            Search</button>
+            Search
+          </button>
         }
       </div>
     </div>
   </nav>
   <div class="main-content">
-  <div class="container">
-    @RenderBody()
-  </div>
+    <div class="container">
+      @RenderBody()
+    </div>
   </div>
   <footer>
     <p>Otter is an open-source, quick-to-deploy, and simple-to-maintain basic knowledge base and wiki, intended for use within Microsoft-centric environments using .Net and SQL Server.</p>
-    <p><a href="https://code.google.com/p/otter-wiki/">Get the source</a> | Version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</p>
+    <p><a href="https://github.com/davemateer/otter-wiki">Get the source</a> | Version @System.Reflection.Assembly.GetAssembly(typeof(Otter.Controllers.ArticleController)).GetName().Version.ToString()</p>
   </footer>
   <script type="text/javascript">
     var SITE_ROOT = '@Url.Content("~/")';
   </script>
-  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js"></script>
-  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.ui/1.10.4/jquery-ui.min.js"></script>
-  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/jquery.validate/1.12.0/jquery.validate.min.js"></script>
-  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/mvc/3.0/jquery.validate.unobtrusive.min.js"></script>
-  <script type="text/javascript" src="@(Request.Url.Scheme)://ajax.aspnetcdn.com/ajax/bootstrap/3.1.1/bootstrap.min.js"></script>
-  <script type="text/javascript" src="@Url.Content("~/Scripts/main.js")"></script>
+  @Scripts.Render("~/scripts/common")
   @RenderSection("scripts", false)
 </body>
 </html>

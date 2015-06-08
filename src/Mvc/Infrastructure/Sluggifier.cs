@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace Otter.Infrastructure
+namespace Otter
 {
     using System.Diagnostics;
     using System.Globalization;

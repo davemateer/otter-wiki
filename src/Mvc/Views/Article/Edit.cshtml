@@ -27,16 +27,16 @@
   </div>
   if (!Model.IsNewArticle)
   {
-  <div class="form-group">
-    @Html.LabelFor(m => m.Comment):
-    @Html.TextBoxFor(m => m.Comment, new { @class = "form-control" })
-    @Html.ValidationMessageFor(m => m.Comment)
-  </div>
-  @Html.HiddenFor(m => m.ArticleId)
-  @Html.HiddenFor(m => m.UpdatedBy)
-  @Html.HiddenFor(m => m.UpdatedDtm)
-  @Html.HiddenFor(m => m.Revision)
-  @Html.HiddenFor(m => m.UrlTitle)
+    <div class="form-group">
+      @Html.LabelFor(m => m.Comment):
+      @Html.TextBoxFor(m => m.Comment, new { @class = "form-control" })
+      @Html.ValidationMessageFor(m => m.Comment)
+    </div>
+    @Html.HiddenFor(m => m.ArticleId)
+    @Html.HiddenFor(m => m.UpdatedBy)
+    @Html.HiddenFor(m => m.UpdatedDtm)
+    @Html.HiddenFor(m => m.Revision)
+    @Html.HiddenFor(m => m.UrlTitle)
   }
   <button type="submit" value="" class="btn btn-primary">@(Model.IsNewArticle ? "Save" : "Save changes")</button>
   if (Model.IsNewArticle)
@@ -58,6 +58,7 @@
       -khtml-opacity: 0.5;
       opacity: 0.5;
     }
+
     #Preview {
       border: 2px dashed #ccc;
       padding: 5px;
@@ -132,6 +133,5 @@
       $('#edit-form :input').bind("change", dirtyHandler);
 
     });
-
   </script>
 }

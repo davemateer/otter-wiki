@@ -1,7 +1,7 @@
 ﻿namespace Test
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Otter.Infrastructure;
+    using Otter;
 
     [TestClass]
     public class MarkdownConverterTest
@@ -37,8 +37,8 @@
         public void Convert_TableLongText()
         {
             var converter = new MarkdownConverter();
-            var actual = converter.Convert("{|\n|Lorem ipsum dolor sit amet,  \nconsetetur sadipscing elitr, \nsed diam nonumy eirmod tempor invidunt\nut labore et dolore magna aliquyam erat, \nsed diam voluptua. \n\nAt vero eos et accusam et justo duo dolores\net ea rebum. Stet clita kasd gubergren,\nno sea takimata sanctus est Lorem ipsum\ndolor sit amet. \n|\n- Lorem ipsum dolor sit amet\n- consetetur sadipscing elitr\n- sed diam nonumy eirmod tempor invidunt\n|}");
-            string expected = "<table><tbody><tr><td><p>Lorem ipsum dolor sit amet,<br>\nconsetetur sadipscing elitr, \nsed diam nonumy eirmod tempor invidunt\nut labore et dolore magna aliquyam erat, \nsed diam voluptua. </p>\n\n<p>At vero eos et accusam et justo duo dolores\net ea rebum. Stet clita kasd gubergren,\nno sea takimata sanctus est Lorem ipsum\ndolor sit amet.</p></td><td><ul>\n<li>Lorem ipsum dolor sit amet</li>\n<li>consetetur sadipscing elitr</li>\n<li>sed diam nonumy eirmod tempor invidunt</li>\n</ul></td></tr></tbody></table>";
+            var actual = converter.Convert("{|\r\n|Lorem ipsum dolor sit amet,  \r\nconsetetur sadipscing elitr, \r\nsed diam nonumy eirmod tempor invidunt\r\nut labore et dolore magna aliquyam erat, \r\nsed diam voluptua. \r\n\r\nAt vero eos et accusam et justo duo dolores\net ea rebum. Stet clita kasd gubergren,\r\nno sea takimata sanctus est Lorem ipsum\r\ndolor sit amet. \r\n|\r\n- Lorem ipsum dolor sit amet\r\n- consetetur sadipscing elitr\r\n- sed diam nonumy eirmod tempor invidunt\r\n|}");
+            string expected = "<table><tbody><tr><td><p>Lorem ipsum dolor sit amet,<br>\r\nconsetetur sadipscing elitr,\r\nsed diam nonumy eirmod tempor invidunt\r\nut labore et dolore magna aliquyam erat,\r\nsed diam voluptua.</p>\r\n<p>At vero eos et accusam et justo duo dolores\r\net ea rebum. Stet clita kasd gubergren,\r\nno sea takimata sanctus est Lorem ipsum\r\ndolor sit amet.</p></td><td><ul>\r\n<li>Lorem ipsum dolor sit amet</li>\r\n<li>consetetur sadipscing elitr</li>\r\n<li>sed diam nonumy eirmod tempor invidunt</li>\r\n</ul></td></tr></tbody></table>";
             Assert.AreEqual(expected, actual);
         }
 
@@ -55,8 +55,8 @@
         public void Convert_TableForbidInbalancedTables()
         {
             var converter = new MarkdownConverter();
-            var actual = converter.Convert("{|\n|Orange||Apple||more\n|-\n|Bread||Pie||more\n|-\n|Butter||and more\n|}");
-            string expected = "<p>{|\n|Orange||Apple||more\n|-\n|Bread||Pie||more\n|-\n|Butter||and more\n|}</p>";
+            var actual = converter.Convert("{|\r\n|Orange||Apple||more\r\n|-\r\n|Bread||Pie||more\r\n|-\r\n|Butter||and more\r\n|}");
+            string expected = "<p>{|\r\n|Orange||Apple||more\r\n|-\r\n|Bread||Pie||more\r\n|-\r\n|Butter||and more\r\n|}</p>";
             Assert.AreEqual(expected, actual);
         }
 
@@ -65,7 +65,7 @@
         {
             var converter = new MarkdownConverter();
             var actual = converter.Convert("Interface servers\n-----------------\n\n{|\n! Server !! Purpose\n|-\n| IF-HVB-03 || MCAP Dictation Interface\n|}");
-            string expected = "<h2>Interface servers</h2>\n\n<table><thead><tr><th>Server</th><th>Purpose</th></tr></thead><tbody><tr><td>IF-HVB-03</td><td>MCAP Dictation Interface</td></tr></tbody></table>";
+            string expected = "<h2>Interface servers</h2>\r\n<table><thead><tr><th>Server</th><th>Purpose</th></tr></thead><tbody><tr><td>IF-HVB-03</td><td>MCAP Dictation Interface</td></tr></tbody></table>";
             Assert.AreEqual(expected, actual);
         }
 
@@ -73,8 +73,8 @@
         public void Convert_MultipleTables()
         {
             var converter = new MarkdownConverter();
-            var actual = converter.Convert("Table 1\n-------\n{|\n| Apple || Fruit\n|}\nTable 2\n-------\n{|\n| Carrot || Vegetable\n|}");
-            string expected = "<h2>Table 1</h2>\n\n<table><tbody><tr><td>Apple</td><td>Fruit</td></tr></tbody></table>\n\n<h2>Table 2</h2>\n\n<table><tbody><tr><td>Carrot</td><td>Vegetable</td></tr></tbody></table>";
+            var actual = converter.Convert("Table 1\n-------\n{|\n| Apple || Fruit\n|}\n\nTable 2\n-------\n{|\n| Carrot || Vegetable\n|}");
+            string expected = "<h2>Table 1</h2>\r\n<table><tbody><tr><td>Apple</td><td>Fruit</td></tr></tbody></table>\r\n<h2>Table 2</h2>\r\n<table><tbody><tr><td>Carrot</td><td>Vegetable</td></tr></tbody></table>";
             Assert.AreEqual(expected, actual);
         }
     }

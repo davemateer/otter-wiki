@@ -36,7 +36,6 @@ namespace Otter.Controllers
     using AutoMapper;
     using DiffMatchPatch;
     using Otter.Domain;
-    using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository;
 
@@ -54,23 +53,15 @@ namespace Otter.Controllers
         }
 
         [HttpGet]
-        public ActionResult Index()
+        public ActionResult Compare(string id, int compareFrom, int compareTo)
         {
-            return this.View();
-        }
+            Debug.Assert(compareFrom < compareTo, "compareFrom < compareTo");
+            if (compareFrom >= compareTo)
+            {
+                throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
+            }
 
-        [HttpGet]
-        public ActionResult ListTags()
-        {
-            var articles = this.articleRepository.GetTagSummary(this.User.Identity);
-            IEnumerable<ArticleListTagsRecord> model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
-            return this.View(model);
-        }
-
-        [HttpGet]
-        public ActionResult Read(string id, int? revision)
-        {
-            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            ArticleBase article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
                 return this.HttpNotFound();
@@ -81,27 +72,42 @@ namespace Otter.Controllers
                 return new HttpUnauthorizedResult();
             }
 
-            ArticleReadModel model = null;
-
-            if (revision.HasValue && revision.Value != article.Revision)
+            ArticleBase articleFrom = this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareFrom);
+            if (articleFrom == null)
             {
-                var articleRevision = this.articleRepository.ArticleHistory.FirstOrDefault(h => h.ArticleId == article.ArticleId && h.Revision == revision.Value);
-                if (articleRevision == null)
-                {
-                    return this.HttpNotFound();
-                }
-
-                model = Mapper.Map<ArticleReadModel>(articleRevision);
-                model.Html = articleRevision.Text == null ? this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision) : this.htmlConverter.Convert(articleRevision.Text);
-                model.UrlTitle = article.UrlTitle;
-            }
-            else
-            {
-                model = Mapper.Map<ArticleReadModel>(article);
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareFrom), "compareFrom");
             }
 
-            this.SetUpdatedDisplayName(model);
-            model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
+            ArticleBase articleTo = compareTo == article.Revision ? article : this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareTo);
+            if (articleTo == null)
+            {
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareTo), "compareTo");
+            }
+
+            var model = new ArticleCompareModel
+            {
+                ArticleId = article.ArticleId,
+                CompareFrom = Mapper.Map<ArticleCompareRecord>(articleFrom),
+                CompareTo = Mapper.Map<ArticleCompareRecord>(articleTo),
+                Title = article.Title,
+                UrlTitle = id
+            };
+
+            this.SetUpdatedDisplayName(model.CompareFrom);
+            this.SetUpdatedDisplayName(model.CompareTo);
+
+            string textFrom = string.IsNullOrEmpty(articleFrom.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareFrom) : articleFrom.Text;
+            string textTo = string.IsNullOrEmpty(articleTo.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareTo) : articleTo.Text;
+            diff_match_patch diff = new diff_match_patch();
+            List<Diff> diffs = diff.diff_main(textFrom, textTo);
+            diff.diff_cleanupSemantic(diffs);
+            string html = diff.diff_prettyHtml(diffs);
+
+            // Attempt to preserve leading spaces. CSS "white-space: pre-wrap" does not work because
+            // it breaks at both the <br> and the &para;
+            html = Regex.Replace(html, @"(?<=<br>)(?<spaces> +)", m => string.Concat(Enumerable.Repeat("&nbsp;", m.Groups["spaces"].Length)));
+
+            model.Diff = html;
 
             return this.View(model);
         }
@@ -174,9 +180,17 @@ namespace Otter.Controllers
                 return this.View(model);
             }
 
-            // TODO: if title has changed, check if title slug has potentially changed, and alert the user.
+            // TODO: if title has changed, check if title slug has potentially changed, and alert
+            //       the user.
             this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             return this.RedirectToAction("Read", new { id = model.UrlTitle });
+        }
+
+        [HttpGet]
+        public ActionResult GetUniqueTags(string query)
+        {
+            var tags = this.articleRepository.ArticleTags.Where(t => t.Tag.StartsWith(query)).Select(t => t.Tag).Distinct().OrderBy(t => t);
+            return this.Json(tags.ToList(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -197,16 +211,16 @@ namespace Otter.Controllers
             this.SetUpdatedDisplayName(model);
 
             model.HistoryRecords = (from a in this.articleRepository.Articles
-                                   join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
-                                   where a.UrlTitle == id
-                                   orderby h.Revision descending
-                                   select new ArticleHistoryRecord()
-                                   {
-                                       Revision = h.Revision,
-                                       UpdatedBy = h.UpdatedBy,
-                                       UpdatedDtm = h.UpdatedDtm,
-                                       Comment = h.Comment
-                                   }).ToList();
+                                    join h in this.articleRepository.ArticleHistory on a.ArticleId equals h.ArticleId
+                                    where a.UrlTitle == id
+                                    orderby h.Revision descending
+                                    select new ArticleHistoryRecord()
+                                    {
+                                        Revision = h.Revision,
+                                        UpdatedBy = h.UpdatedBy,
+                                        UpdatedDtm = h.UpdatedDtm,
+                                        Comment = h.Comment
+                                    }).ToList();
 
             foreach (ArticleHistoryRecord record in model.HistoryRecords)
             {
@@ -217,15 +231,34 @@ namespace Otter.Controllers
         }
 
         [HttpGet]
-        public ActionResult Compare(string id, int compareFrom, int compareTo)
+        public ActionResult Index()
         {
-            Debug.Assert(compareFrom < compareTo, "compareFrom < compareTo");
-            if (compareFrom >= compareTo)
-            {
-                throw new ArgumentException("compareFrom must be less than compareTo revision", "compareFrom");
-            }
+            return this.View();
+        }
 
-            ArticleBase article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+        [HttpGet]
+        public ActionResult ListTags()
+        {
+            var articles = this.articleRepository.GetTagSummary(this.User.Identity);
+            IEnumerable<ArticleListTagsRecord> model = articles.Select(s => new ArticleListTagsRecord() { Tag = s.Item1, Count = s.Item2 }).OrderBy(t => t.Tag);
+            return this.View(model);
+        }
+
+        [HttpPost]
+        [ValidateInput(false)]
+        public ActionResult Preview(string id, string text)
+        {
+            return this.Json(new
+            {
+                id = id,
+                html = this.htmlConverter.Convert(text)
+            });
+        }
+
+        [HttpGet]
+        public ActionResult Read(string id, int? revision)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
                 return this.HttpNotFound();
@@ -236,51 +269,29 @@ namespace Otter.Controllers
                 return new HttpUnauthorizedResult();
             }
 
-            ArticleBase articleFrom = this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareFrom);
-            if (articleFrom == null)
+            ArticleReadModel model = null;
+
+            if (revision.HasValue && revision.Value != article.Revision)
             {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareFrom), "compareFrom");
+                var articleRevision = this.articleRepository.ArticleHistory.FirstOrDefault(h => h.ArticleId == article.ArticleId && h.Revision == revision.Value);
+                if (articleRevision == null)
+                {
+                    return this.HttpNotFound();
+                }
+
+                model = Mapper.Map<ArticleReadModel>(articleRevision);
+                model.Html = articleRevision.Text == null ? this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision) : this.htmlConverter.Convert(articleRevision.Text);
+                model.UrlTitle = article.UrlTitle;
+            }
+            else
+            {
+                model = Mapper.Map<ArticleReadModel>(article);
             }
 
-            ArticleBase articleTo = compareTo == article.Revision ? article : this.articleRepository.ArticleHistory.FirstOrDefault(ah => ah.ArticleId == article.ArticleId && ah.Revision == compareTo);
-            if (articleTo == null)
-            {
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "Revision {0} is invalid for this article", compareTo), "compareTo");
-            }
-
-            var model = new ArticleCompareModel
-            {
-                ArticleId = article.ArticleId,
-                CompareFrom = Mapper.Map<ArticleCompareRecord>(articleFrom),
-                CompareTo = Mapper.Map<ArticleCompareRecord>(articleTo),
-                Title = article.Title,
-                UrlTitle = id
-            };
-
-            this.SetUpdatedDisplayName(model.CompareFrom);
-            this.SetUpdatedDisplayName(model.CompareTo);
-
-            string textFrom = string.IsNullOrEmpty(articleFrom.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareFrom) : articleFrom.Text;
-            string textTo = string.IsNullOrEmpty(articleTo.Text) ? this.articleRepository.GetRevisionText(article.ArticleId, compareTo) : articleTo.Text;
-            diff_match_patch diff = new diff_match_patch();
-            List<Diff> diffs = diff.diff_main(textFrom, textTo);
-            diff.diff_cleanupSemantic(diffs);
-            string html = diff.diff_prettyHtml(diffs);
-
-            // Attempt to preserve leading spaces. CSS "white-space: pre-wrap" does not work because it breaks at both the
-            // <br> and the &para;
-            html = Regex.Replace(html, @"(?<=<br>)(?<spaces> +)", m => string.Concat(Enumerable.Repeat("&nbsp;", m.Groups["spaces"].Length)));
-
-            model.Diff = html;
+            this.SetUpdatedDisplayName(model);
+            model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
 
             return this.View(model);
-        }
-
-        [HttpGet]
-        public ActionResult GetUniqueTags(string query)
-        {
-            var tags = this.articleRepository.ArticleTags.Where(t => t.Tag.StartsWith(query)).Select(t => t.Tag).Distinct().OrderBy(t => t);
-            return this.Json(tags.ToList(), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -336,41 +347,6 @@ namespace Otter.Controllers
             };
 
             return this.View("Search", model);
-        }
-
-        [HttpPost]
-        [ValidateInput(false)]
-        public ActionResult Preview(string id, string text)
-        {
-            return this.Json(new
-            {
-                id = id,
-                html = this.htmlConverter.Convert(text)
-            });
-        }
-
-        private static List<string> SplitTags(string input)
-        {
-            var tags = new List<string>();
-
-            if (string.IsNullOrEmpty(input))
-            {
-                return tags;
-            }
-
-            char[] separators = { ',', ';' };
-            string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var tag in values)
-            {
-                string canonical = tag.Trim();  // Could do more: lowercase, remove accents, replace spaces with dashes, etc.
-                if (!string.IsNullOrEmpty(canonical) && !tags.Contains(canonical))
-                {
-                    tags.Add(canonical);
-                }
-            }
-
-            return tags;
         }
 
         private static List<ArticleSecurity> PopulateSecurityRecords(PermissionModel model, ModelStateDictionary modelState, string userId, ISecurityRepository securityRepository)
@@ -504,6 +480,30 @@ namespace Otter.Controllers
             }
 
             return security;
+        }
+
+        private static List<string> SplitTags(string input)
+        {
+            var tags = new List<string>();
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return tags;
+            }
+
+            char[] separators = { ',', ';' };
+            string[] values = input.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var tag in values)
+            {
+                string canonical = tag.Trim();  // Could do more: lowercase, remove accents, replace spaces with dashes, etc.
+                if (!string.IsNullOrEmpty(canonical) && !tags.Contains(canonical))
+                {
+                    tags.Add(canonical);
+                }
+            }
+
+            return tags;
         }
 
         private void SetUpdatedDisplayName(IUpdatedArticle article)

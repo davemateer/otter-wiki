@@ -30,12 +30,12 @@ namespace Otter.Models
 
     public sealed class ArticleSearchModel
     {
+        public IEnumerable<ArticleSearchResult> Articles { get; set; }
+
         public bool IsTagSearch { get; set; }
 
         public string Query { get; set; }
 
         public IEnumerable<string> Tags { get; set; }
-
-        public IEnumerable<ArticleSearchResult> Articles { get; set; }
     }
 }

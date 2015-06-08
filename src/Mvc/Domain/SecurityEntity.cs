@@ -35,9 +35,18 @@ namespace Otter.Domain
     {
         public string EntityId { get; set; }
 
+        public SecurityEntityTypes EntityType { get; set; }
+
         public string Name { get; set; }
 
-        public SecurityEntityTypes EntityType { get; set; }
+        public static SecurityEntity FromSearchResult(SearchResult result, SecurityEntityTypes type)
+        {
+            var entity = new SecurityEntity();
+            entity.EntityId = result.Properties["sAMAccountName"][0].ToString();
+            entity.EntityType = type;
+            entity.Name = result.Properties["displayName"].Count > 0 ? result.Properties["displayName"][0].ToString() : entity.EntityId;
+            return entity;
+        }
 
         public static bool TryParse(string s, out SecurityEntity result)
         {
@@ -73,15 +82,6 @@ namespace Otter.Domain
             }
 
             return true;
-        }
-
-        public static SecurityEntity FromSearchResult(SearchResult result, SecurityEntityTypes type)
-        {
-            var entity = new SecurityEntity();
-            entity.EntityId = result.Properties["sAMAccountName"][0].ToString();
-            entity.EntityType = type;
-            entity.Name = result.Properties["displayName"].Count > 0 ? result.Properties["displayName"][0].ToString() : entity.EntityId;
-            return entity;
         }
 
         public override string ToString()

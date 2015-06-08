@@ -23,7 +23,7 @@
 // THE SOFTWARE.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace Otter.Infrastructure
+namespace Otter
 {
     public interface ITextToHtmlConverter
     {

@@ -7,10 +7,10 @@
 {
   <h2><small>Tags:</small></h2>
   <div class="tags">
-  @foreach (var tag in Model.Tags)
-  {
-  <span class="label label-default">@Html.ActionLink(tag, "Tagged", new { id = tag })</span>
-  }
+    @foreach (var tag in Model.Tags)
+    {
+      <span class="label label-default">@Html.ActionLink(tag, "Tagged", new { id = tag })</span>
+    }
   </div>
 }
 @if (Model.Articles.Any())

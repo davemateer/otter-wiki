@@ -32,19 +32,20 @@ namespace Otter.Repository.Concrete
 
     public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
     {
-        public ApplicationDbContext() : base("Otter")
+        public ApplicationDbContext()
+            : base("Otter")
         {
             Database.SetInitializer<ApplicationDbContext>(null);
-        }
-
-        public DbSet<Article> Articles
-        {
-            get { return this.Set<Article>(); }
         }
 
         public DbSet<ArticleHistory> ArticleHistory
         {
             get { return this.Set<ArticleHistory>(); }
+        }
+
+        public DbSet<Article> Articles
+        {
+            get { return this.Set<Article>(); }
         }
 
         public DbSet<ArticleSecurity> ArticleSecurity

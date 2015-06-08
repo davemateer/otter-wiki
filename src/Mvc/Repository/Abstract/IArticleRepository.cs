@@ -34,32 +34,32 @@ namespace Otter.Repository
 
     public interface IArticleRepository
     {
-        IQueryable<Article> Articles { get; }
-
         IQueryable<ArticleHistory> ArticleHistory { get; }
 
-        IQueryable<ArticleTag> ArticleTags { get; }
+        IQueryable<Article> Articles { get; }
 
         IQueryable<ArticleSecurity> ArticleSecurity { get; }
 
-        string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
+        IQueryable<ArticleTag> ArticleTags { get; }
 
-        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
+        bool CanModify(IPrincipal user, int articleId);
+
+        bool CanView(IPrincipal user, int articleId);
 
         string GetRevisionHtml(int articleId, int revision);
 
         string GetRevisionText(int articleId, int revision);
 
-        IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
-
-        IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity);
-
         IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity);
 
         void HydratePermissionModel(PermissionModel model, int articleId, string userId);
 
-        bool CanView(IPrincipal user, int articleId);
+        string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
 
-        bool CanModify(IPrincipal user, int articleId);
+        IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
+
+        IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity);
+
+        void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
     }
 }

@@ -37,7 +37,6 @@ namespace Otter.Repository
     using System.Transactions;
     using DiffMatchPatch;
     using Otter.Domain;
-    using Otter.Infrastructure;
     using Otter.Models;
     using Otter.Repository.Abstract;
 
@@ -57,14 +56,14 @@ namespace Otter.Repository
             this.securityRepository = securityRepository;
         }
 
-        public IQueryable<Article> Articles
-        {
-            get { return this.context.Articles; }
-        }
-
         public IQueryable<ArticleHistory> ArticleHistory
         {
             get { return this.context.ArticleHistory; }
+        }
+
+        public IQueryable<Article> Articles
+        {
+            get { return this.context.Articles; }
         }
 
         public IQueryable<ArticleSecurity> ArticleSecurity
@@ -75,6 +74,234 @@ namespace Otter.Repository
         public IQueryable<ArticleTag> ArticleTags
         {
             get { return this.context.ArticleTags; }
+        }
+
+        public bool CanModify(IPrincipal user, int articleId)
+        {
+            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
+
+            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
+
+            foreach (var record in security)
+            {
+                if (record.Permission == Domain.ArticleSecurity.PermissionModify &&
+                    (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
+                     (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
+                     (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId))))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool CanView(IPrincipal user, int articleId)
+        {
+            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
+
+            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
+
+            foreach (var record in security)
+            {
+                if (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
+                    (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
+                    (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public string GetRevisionHtml(int articleId, int revision)
+        {
+            string text = this.GetRevisionText(articleId, revision);
+            return this.converter.Convert(text);
+        }
+
+        public string GetRevisionText(int articleId, int revision)
+        {
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_SelectRevisionTextDeltaSequence";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[2];
+
+            parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
+            parameters[0].Value = articleId;
+
+            parameters[1] = new SqlParameter("@Revision", SqlDbType.Int);
+            parameters[1].Value = revision;
+
+            cmd.Parameters.AddRange(parameters);
+
+            string text = string.Empty;
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int revisionOrdinal = reader.GetOrdinal("Revision");
+                    int textOrdinal = reader.GetOrdinal("Text");
+
+                    if (reader.Read())
+                    {
+                        // The first record is the base text.
+                        text = reader.GetString(textOrdinal);
+
+                        // Subsequent records are deltas to apply to the base text.
+                        var patchUtil = new diff_match_patch();
+                        while (reader.Read())
+                        {
+                            List<Patch> patches = patchUtil.patch_fromText(reader.GetString(textOrdinal));
+                            object[] results = patchUtil.patch_apply(patches, text);
+                            text = (string)results[0];
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return text;
+        }
+
+        public IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity)
+        {
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_GetSummaryByTag";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[2];
+
+            parameters[0] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[0].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[1] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[1].TypeName = "dbo.SecurityEntityTable";
+            parameters[1].Value = this.GetGroupParameter(identity);
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    var tags = new List<Tuple<string, int>>();
+
+                    int tagOrdinal = reader.GetOrdinal("Tag");
+                    int countOrdinal = reader.GetOrdinal("CountOfArticles");
+
+                    while (reader.Read())
+                    {
+                        tags.Add(Tuple.Create(reader.IsDBNull(tagOrdinal) ? string.Empty : reader.GetString(tagOrdinal), reader.GetInt32(countOrdinal)));
+                    }
+
+                    return tags;
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
+        {
+            // Assume that permissions are specified groups and individuals. If we find an
+            // "Everyone" scope in the security tokens, we will modify this.
+            model.ModifyOption = PermissionOption.Specified;
+            model.ViewOption = PermissionOption.Specified;
+
+            var viewGroups = new List<string>();
+            var viewUsers = new List<string>();
+            var modifyGroups = new List<string>();
+            var modifyUsers = new List<string>();
+
+            var tokens = this.ArticleSecurity.Where(s => s.ArticleId == articleId);
+            foreach (var token in tokens)
+            {
+                // If this is a view token and we've already learned that everyone can view, there's
+                // no need to process the record.
+                if (model.ViewOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
+                {
+                    continue;
+                }
+
+                // If this is a modify token and we've already learned that everyone can modify,
+                // there's no need to process the record.
+                if (model.ModifyOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                {
+                    continue;
+                }
+
+                if (token.Scope == Otter.Domain.ArticleSecurity.ScopeEveryone)
+                {
+                    model.ViewOption = PermissionOption.Everyone;
+                    viewGroups.Clear();
+                    viewUsers.Clear();
+
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                    {
+                        model.ModifyOption = PermissionOption.Everyone;
+                        modifyGroups.Clear();
+                        modifyUsers.Clear();
+                    }
+                }
+                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeGroup)
+                {
+                    viewGroups.Add(token.EntityId);
+
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                    {
+                        modifyGroups.Add(token.EntityId);
+                    }
+                }
+                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeIndividual)
+                {
+                    viewUsers.Add(token.EntityId);
+
+                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
+                    {
+                        modifyUsers.Add(token.EntityId);
+                    }
+                }
+            }
+
+            if (viewUsers.Count == 1 && viewUsers[0] == userId)
+            {
+                model.ViewOption = PermissionOption.JustMe;
+                viewUsers.Clear();
+            }
+
+            if (modifyUsers.Count == 1 && modifyUsers[0] == userId)
+            {
+                model.ModifyOption = PermissionOption.JustMe;
+                modifyUsers.Clear();
+            }
+
+            this.StandardizeAccounts(viewUsers, SecurityEntityTypes.User);
+            this.StandardizeAccounts(viewGroups, SecurityEntityTypes.Group);
+            this.StandardizeAccounts(modifyUsers, SecurityEntityTypes.User);
+            this.StandardizeAccounts(modifyGroups, SecurityEntityTypes.Group);
+
+            viewUsers.AddRange(viewGroups);
+            viewUsers.Sort();
+            model.ViewAccounts = string.Join("; ", viewUsers);
+
+            modifyUsers.AddRange(modifyGroups);
+            modifyUsers.Sort();
+            model.ModifyAccounts = string.Join("; ", modifyUsers);
         }
 
         public string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId)
@@ -173,6 +400,125 @@ namespace Otter.Repository
             }
 
             return urlTitle;
+        }
+
+        public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)
+        {
+            var results = new List<ArticleSearchResult>();
+
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_SearchByQuery";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[3];
+
+            parameters[0] = new SqlParameter("@Query", SqlDbType.NVarChar, 1000);
+            parameters[0].Value = query;
+
+            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[2].TypeName = "dbo.SecurityEntityTable";
+            parameters[2].Value = this.GetGroupParameter(identity);
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
+                    int titleOrdinal = reader.GetOrdinal("Title");
+                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
+                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+
+                    while (reader.Read())
+                    {
+                        results.Add(new ArticleSearchResult()
+                        {
+                            Title = reader.GetString(titleOrdinal),
+                            UpdatedBy = reader.GetString(updatedByOrdinal),
+                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UrlTitle = reader.GetString(urlTitleOrdinal)
+                        });
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            this.GetDisplayNames(results);
+
+            return results;
+        }
+
+        public IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity)
+        {
+            var results = new List<ArticleSearchResult>();
+
+            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "up_Article_SearchByTag";
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            SqlParameter[] parameters = new SqlParameter[3];
+
+            parameters[0] = new SqlParameter("@Tag", SqlDbType.NVarChar, 30);
+            if (string.IsNullOrEmpty(tag))
+            {
+                parameters[0].Value = DBNull.Value;
+            }
+            else
+            {
+                parameters[0].Value = tag;
+            }
+
+            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
+            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
+
+            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
+            parameters[2].TypeName = "dbo.SecurityEntityTable";
+            parameters[2].Value = this.GetGroupParameter(identity);
+
+            cmd.Parameters.AddRange(parameters);
+
+            conn.Open();
+
+            try
+            {
+                using (var reader = cmd.ExecuteReader())
+                {
+                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
+                    int titleOrdinal = reader.GetOrdinal("Title");
+                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
+                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+
+                    while (reader.Read())
+                    {
+                        results.Add(new ArticleSearchResult()
+                        {
+                            Title = reader.GetString(titleOrdinal),
+                            UpdatedBy = reader.GetString(updatedByOrdinal),
+                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UrlTitle = reader.GetString(urlTitleOrdinal)
+                        });
+                    }
+                }
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            this.GetDisplayNames(results);
+
+            return results;
         }
 
         public void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId)
@@ -358,354 +704,10 @@ namespace Otter.Repository
             }
         }
 
-        public string GetRevisionHtml(int articleId, int revision)
-        {
-            string text = this.GetRevisionText(articleId, revision);
-            return this.converter.Convert(text);
-        }
-
-        public string GetRevisionText(int articleId, int revision)
-        {
-            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = "up_Article_SelectRevisionTextDeltaSequence";
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter[] parameters = new SqlParameter[2];
-
-            parameters[0] = new SqlParameter("@ArticleId", SqlDbType.Int);
-            parameters[0].Value = articleId;
-
-            parameters[1] = new SqlParameter("@Revision", SqlDbType.Int);
-            parameters[1].Value = revision;
-
-            cmd.Parameters.AddRange(parameters);
-
-            string text = string.Empty;
-
-            conn.Open();
-
-            try
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    int revisionOrdinal = reader.GetOrdinal("Revision");
-                    int textOrdinal = reader.GetOrdinal("Text");
-
-                    if (reader.Read())
-                    {
-                        // The first record is the base text.
-                        text = reader.GetString(textOrdinal);
-
-                        // Subsequent records are deltas to apply to the base text.
-                        var patchUtil = new diff_match_patch();
-                        while (reader.Read())
-                        {
-                            List<Patch> patches = patchUtil.patch_fromText(reader.GetString(textOrdinal));
-                            object[] results = patchUtil.patch_apply(patches, text);
-                            text = (string)results[0];
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return text;
-        }
-
-        public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)
-        {
-            var results = new List<ArticleSearchResult>();
-
-            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = "up_Article_SearchByQuery";
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter[] parameters = new SqlParameter[3];
-
-            parameters[0] = new SqlParameter("@Query", SqlDbType.NVarChar, 1000);
-            parameters[0].Value = query;
-
-            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
-            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
-
-            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
-            parameters[2].TypeName = "dbo.SecurityEntityTable";
-            parameters[2].Value = this.GetGroupParameter(identity);
-
-            cmd.Parameters.AddRange(parameters);
-
-            conn.Open();
-
-            try
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
-                    int titleOrdinal = reader.GetOrdinal("Title");
-                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
-                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
-
-                    while (reader.Read())
-                    {
-                        results.Add(new ArticleSearchResult()
-                        {
-                            Title = reader.GetString(titleOrdinal),
-                            UpdatedBy = reader.GetString(updatedByOrdinal),
-                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
-                            UrlTitle = reader.GetString(urlTitleOrdinal)
-                        });
-                    }
-                }
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            this.GetDisplayNames(results);
-
-            return results;
-        }
-
-        public IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity)
-        {
-            var results = new List<ArticleSearchResult>();
-
-            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = "up_Article_SearchByTag";
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter[] parameters = new SqlParameter[3];
-
-            parameters[0] = new SqlParameter("@Tag", SqlDbType.NVarChar, 30);
-            if (string.IsNullOrEmpty(tag))
-            {
-                parameters[0].Value = DBNull.Value;
-            }
-            else
-            {
-                parameters[0].Value = tag;
-            }
-
-            parameters[1] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
-            parameters[1].Value = this.securityRepository.StandardizeUserId(identity.Name);
-
-            parameters[2] = new SqlParameter("@UserGroups", SqlDbType.Structured);
-            parameters[2].TypeName = "dbo.SecurityEntityTable";
-            parameters[2].Value = this.GetGroupParameter(identity);
-
-            cmd.Parameters.AddRange(parameters);
-
-            conn.Open();
-
-            try
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
-                    int titleOrdinal = reader.GetOrdinal("Title");
-                    int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
-                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
-
-                    while (reader.Read())
-                    {
-                        results.Add(new ArticleSearchResult()
-                        {
-                            Title = reader.GetString(titleOrdinal),
-                            UpdatedBy = reader.GetString(updatedByOrdinal),
-                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
-                            UrlTitle = reader.GetString(urlTitleOrdinal)
-                        });
-                    }
-                }
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            this.GetDisplayNames(results);
-
-            return results;
-        }
-
-        public void HydratePermissionModel(PermissionModel model, int articleId, string userId)
-        {
-            // Assume that permissions are specified groups and individuals. If we find an "Everyone" scope in the
-            // security tokens, we will modify this.
-            model.ModifyOption = PermissionOption.Specified;
-            model.ViewOption = PermissionOption.Specified;
-
-            var viewGroups = new List<string>();
-            var viewUsers = new List<string>();
-            var modifyGroups = new List<string>();
-            var modifyUsers = new List<string>();
-
-            var tokens = this.ArticleSecurity.Where(s => s.ArticleId == articleId);
-            foreach (var token in tokens)
-            {
-                // If this is a view token and we've already learned that everyone can view, there's no need to process the record.
-                if (model.ViewOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionView)
-                {
-                    continue;
-                }
-
-                // If this is a modify token and we've already learned that everyone can modify, there's no need to process the record.
-                if (model.ModifyOption == PermissionOption.Everyone && token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
-                {
-                    continue;
-                }
-
-                if (token.Scope == Otter.Domain.ArticleSecurity.ScopeEveryone)
-                {
-                    model.ViewOption = PermissionOption.Everyone;
-                    viewGroups.Clear();
-                    viewUsers.Clear();
-
-                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
-                    {
-                        model.ModifyOption = PermissionOption.Everyone;
-                        modifyGroups.Clear();
-                        modifyUsers.Clear();
-                    }
-                }
-                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeGroup)
-                {
-                    viewGroups.Add(token.EntityId);
-
-                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
-                    {
-                        modifyGroups.Add(token.EntityId);
-                    }
-                }
-                else if (token.Scope == Otter.Domain.ArticleSecurity.ScopeIndividual)
-                {
-                    viewUsers.Add(token.EntityId);
-
-                    if (token.Permission == Otter.Domain.ArticleSecurity.PermissionModify)
-                    {
-                        modifyUsers.Add(token.EntityId);
-                    }
-                }
-            }
-
-            if (viewUsers.Count == 1 && viewUsers[0] == userId)
-            {
-                model.ViewOption = PermissionOption.JustMe;
-                viewUsers.Clear();
-            }
-
-            if (modifyUsers.Count == 1 && modifyUsers[0] == userId)
-            {
-                model.ModifyOption = PermissionOption.JustMe;
-                modifyUsers.Clear();
-            }
-
-            this.StandardizeAccounts(viewUsers, SecurityEntityTypes.User);
-            this.StandardizeAccounts(viewGroups, SecurityEntityTypes.Group);
-            this.StandardizeAccounts(modifyUsers, SecurityEntityTypes.User);
-            this.StandardizeAccounts(modifyGroups, SecurityEntityTypes.Group);
-
-            viewUsers.AddRange(viewGroups);
-            viewUsers.Sort();
-            model.ViewAccounts = string.Join("; ", viewUsers);
-
-            modifyUsers.AddRange(modifyGroups);
-            modifyUsers.Sort();
-            model.ModifyAccounts = string.Join("; ", modifyUsers);
-        }
-
-        public bool CanView(IPrincipal user, int articleId)
-        {
-            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
-
-            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
-
-            foreach (var record in security)
-            {
-                if (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
-                    (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
-                    (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId)))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public bool CanModify(IPrincipal user, int articleId)
-        {
-            string userId = this.securityRepository.StandardizeUserId(user.Identity.Name);
-
-            IEnumerable<ArticleSecurity> security = this.GetSecurityRecords(articleId);
-
-            foreach (var record in security)
-            {
-                if (record.Permission == Domain.ArticleSecurity.PermissionModify &&
-                    (record.Scope == Domain.ArticleSecurity.ScopeEveryone ||
-                     (record.Scope == Domain.ArticleSecurity.ScopeIndividual && StringComparer.OrdinalIgnoreCase.Equals(userId, record.EntityId)) ||
-                     (record.Scope == Domain.ArticleSecurity.ScopeGroup && user.IsInRole(record.EntityId))))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity)
-        {
-            var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
-            var cmd = conn.CreateCommand();
-            cmd.CommandText = "up_Article_GetSummaryByTag";
-            cmd.CommandType = CommandType.StoredProcedure;
-
-            SqlParameter[] parameters = new SqlParameter[2];
-
-            parameters[0] = new SqlParameter("@UserId", SqlDbType.NVarChar, 256);
-            parameters[0].Value = this.securityRepository.StandardizeUserId(identity.Name);
-
-            parameters[1] = new SqlParameter("@UserGroups", SqlDbType.Structured);
-            parameters[1].TypeName = "dbo.SecurityEntityTable";
-            parameters[1].Value = this.GetGroupParameter(identity);
-
-            cmd.Parameters.AddRange(parameters);
-
-            conn.Open();
-
-            try
-            {
-                using (var reader = cmd.ExecuteReader())
-                {
-                    var tags = new List<Tuple<string, int>>();
-
-                    int tagOrdinal = reader.GetOrdinal("Tag");
-                    int countOrdinal = reader.GetOrdinal("CountOfArticles");
-
-                    while (reader.Read())
-                    {
-                        tags.Add(Tuple.Create(reader.IsDBNull(tagOrdinal) ? string.Empty : reader.GetString(tagOrdinal), reader.GetInt32(countOrdinal)));
-                    }
-
-                    return tags;
-                }
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
         private static int GetScopeOrder(string scope)
         {
-            // Minor effeciency; sort items in the records in the order from least to most expensive to process.
+            // Minor effeciency; sort items in the records in the order from least to most expensive
+            // to process.
             if (scope == Domain.ArticleSecurity.ScopeEveryone)
             {
                 return 0;
@@ -725,20 +727,6 @@ namespace Otter.Repository
             return int.MaxValue;
         }
 
-        private IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId)
-        {
-            IEnumerable<ArticleSecurity> security;
-            if (!ArticleSecurityCache.TryGetValue(articleId, out security))
-            {
-                List<ArticleSecurity> temp = this.ArticleSecurity.Where(s => s.ArticleId == articleId).ToList();
-                temp.Sort((s1, s2) => GetScopeOrder(s1.Scope).CompareTo(GetScopeOrder(s2.Scope)));
-                ArticleSecurityCache.TryAdd(articleId, temp);
-                security = temp;
-            }
-
-            return security;
-        }
-
         private void GetDisplayNames(List<ArticleSearchResult> results)
         {
             results.ForEach(delegate(ArticleSearchResult sr)
@@ -752,20 +740,6 @@ namespace Otter.Repository
                     }
                 }
             });
-        }
-
-        private void StandardizeAccounts(List<string> accounts, SecurityEntityTypes type)
-        {
-            accounts.RemoveAll(s => string.IsNullOrEmpty(s));
-
-            for (int i = 0; i < accounts.Count; i++)
-            {
-                SecurityEntity entity = this.securityRepository.Find(accounts[i], type);
-                if (entity != null)
-                {
-                    accounts[i] = entity.ToString();
-                }
-            }
         }
 
         private object GetGroupParameter(IIdentity identity)
@@ -789,6 +763,34 @@ namespace Otter.Repository
             }
 
             return groups;
+        }
+
+        private IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId)
+        {
+            IEnumerable<ArticleSecurity> security;
+            if (!ArticleSecurityCache.TryGetValue(articleId, out security))
+            {
+                List<ArticleSecurity> temp = this.ArticleSecurity.Where(s => s.ArticleId == articleId).ToList();
+                temp.Sort((s1, s2) => GetScopeOrder(s1.Scope).CompareTo(GetScopeOrder(s2.Scope)));
+                ArticleSecurityCache.TryAdd(articleId, temp);
+                security = temp;
+            }
+
+            return security;
+        }
+
+        private void StandardizeAccounts(List<string> accounts, SecurityEntityTypes type)
+        {
+            accounts.RemoveAll(s => string.IsNullOrEmpty(s));
+
+            for (int i = 0; i < accounts.Count; i++)
+            {
+                SecurityEntity entity = this.securityRepository.Find(accounts[i], type);
+                if (entity != null)
+                {
+                    accounts[i] = entity.ToString();
+                }
+            }
         }
     }
 }
