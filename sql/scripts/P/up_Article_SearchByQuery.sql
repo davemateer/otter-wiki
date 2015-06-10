@@ -1,3 +1,4 @@
+-- P  up_Article_SearchByQuery
 
 CREATE PROCEDURE [dbo].[up_Article_SearchByQuery] (
 	@Query nvarchar(1000)
@@ -42,3 +43,4 @@ GROUP BY
 	,a.UpdatedDtm
 ORDER BY 
 	SUM(tResults.Rank) DESC
+

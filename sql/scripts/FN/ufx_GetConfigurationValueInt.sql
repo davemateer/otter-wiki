@@ -1,3 +1,4 @@
+-- FN ufx_GetConfigurationValueInt
 CREATE FUNCTION dbo.ufx_GetConfigurationValueInt (
 	@ConfigKey varchar(50)
 	,@Default int

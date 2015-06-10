@@ -1,3 +1,4 @@
+-- P  up_Article_GetSummaryByTag
 CREATE PROCEDURE dbo.up_Article_GetSummaryByTag (
 	@UserId nvarchar(256)
 	,@UserGroups SecurityEntityTable READONLY

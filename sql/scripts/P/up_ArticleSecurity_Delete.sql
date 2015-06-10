@@ -1,3 +1,4 @@
+-- P  up_ArticleSecurity_Delete
 CREATE PROCEDURE dbo.up_ArticleSecurity_Delete (
 	@ArticleId int
 	,@Scope char(1)
@@ -11,3 +12,4 @@ WHERE
 	ArticleId = @ArticleId
 	AND Scope = @Scope
 	AND EntityId = @EntityId
+

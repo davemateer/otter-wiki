@@ -1,3 +1,4 @@
+-- P  up_Article_SearchByTag
 CREATE PROCEDURE dbo.up_Article_SearchByTag (
 	@Tag nvarchar(30)
 	,@UserId nvarchar(256)

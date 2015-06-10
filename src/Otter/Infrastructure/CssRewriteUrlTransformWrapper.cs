@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="BundleConfig.cs" company="Dave Mateer">
+// <copyright file="CssRewriteUrlTransformWrapper.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -25,20 +25,14 @@
 //-----------------------------------------------------------------------
 namespace Otter
 {
+    using System.Web;
     using System.Web.Optimization;
 
-    public static class BundleConfig
+    public sealed class CssRewriteUrlTransformWrapper : IItemTransform
     {
-        public static void RegisterBundles(BundleCollection bundles)
+        public string Process(string includedVirtualPath, string input)
         {
-            IItemTransform transform = new CssRewriteUrlTransformWrapper();
-            bundles.Add(new ScriptBundle("~/bundles/scripts/common").Include("~/Scripts/jquery-{version}.js", "~/Scripts/bootstrap.js", "~/Scripts/jquery-ui.js", "~/Scripts/jquery.validate.js", "~/Scripts/jquery.validate.unobtrusive.js", "~/Scripts/main.js"));
-            bundles.Add(new StyleBundle("~/bundles/css/common")
-                .Include("~/Content/jquery-ui.css", transform)
-                .Include("~/Content/bootstrap.css", transform)
-                .Include("~/Content/bootstrap-theme.css", transform)
-                .Include("~/Content/otter.css", transform));
-            BundleTable.EnableOptimizations = true;
+            return new CssRewriteUrlTransform().Process("~" + VirtualPathUtility.ToAbsolute(includedVirtualPath), input);
         }
     }
 }

@@ -1,3 +1,4 @@
+-- P  up_Article_Insert
 CREATE PROCEDURE [dbo].[up_Article_Insert] (
 	@ArticleId int OUTPUT
 	,@Title nvarchar(100)
@@ -30,3 +31,4 @@ INSERT INTO dbo.Article (
 )
 
 SET @ArticleId = @@IDENTITY
+

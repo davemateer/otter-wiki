@@ -11,7 +11,7 @@ CREATE TABLE [dbo].[Article](
 	[UrlTitle] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[UpdatedDtm] [datetime] NOT NULL,
 	[UpdatedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-	[Comment] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[Comment] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[Text] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[Html] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
  CONSTRAINT [PK_Article] PRIMARY KEY NONCLUSTERED 
@@ -32,9 +32,7 @@ CREATE UNIQUE CLUSTERED INDEX [IX_Article_UrlTitle] ON [dbo].[Article]
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
 GO
 
-CREATE FULLTEXT INDEX ON [dbo].[Article](
-[Text] LANGUAGE [English], 
-[Title] LANGUAGE [English])
+CREATE FULLTEXT INDEX ON [dbo].[Article]
 KEY INDEX [IX_Article_UrlTitle]ON ([ArticleFullTextCatalog], FILEGROUP [PRIMARY])
 WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
 

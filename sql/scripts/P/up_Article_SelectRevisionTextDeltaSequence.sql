@@ -1,3 +1,4 @@
+-- P  up_Article_SelectRevisionTextDeltaSequence
 CREATE PROCEDURE up_Article_SelectRevisionTextDeltaSequence (
 	@ArticleId int,
 	@Revision int
@@ -41,3 +42,4 @@ WHERE
 	)
 	
 ORDER BY 1 DESC  -- Order by Revision, from most recent to earliest.
+

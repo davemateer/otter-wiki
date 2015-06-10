@@ -1,3 +1,4 @@
+-- P  up_Article_Update
 CREATE PROCEDURE [dbo].[up_Article_Update] (
 	@ArticleId int
 	,@Title nvarchar(100)
@@ -73,3 +74,4 @@ BEGIN TRANSACTION
 	END
 
 COMMIT
+
