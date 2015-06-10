@@ -66,6 +66,12 @@
     <Reference Include="HtmlAgilityPack">
       <HintPath>..\packages\HtmlAgilityPack.1.4.9\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
+    <Reference Include="ImageResizer">
+      <HintPath>..\packages\ImageResizer.3.4.3\lib\ImageResizer.dll</HintPath>
+    </Reference>
+    <Reference Include="ImageResizer.Mvc">
+      <HintPath>..\packages\ImageResizer.Mvc.3.4.3\lib\ImageResizer.Mvc.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -155,6 +161,7 @@
     <Compile Include="Domain\Article.cs" />
     <Compile Include="Domain\ArticleBase.cs" />
     <Compile Include="Domain\ArticleHistory.cs" />
+    <Compile Include="Domain\ArticleImage.cs" />
     <Compile Include="Domain\ArticleSearchResult.cs" />
     <Compile Include="Domain\ArticleSecurity.cs" />
     <Compile Include="Domain\ArticleTag.cs" />
@@ -163,17 +170,22 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Infrastructure\ArticleContentAuthorizationModule.cs" />
+    <Compile Include="Infrastructure\HtmlHelperExtensions.cs" />
     <Compile Include="Infrastructure\ITextToHtmlConverter.cs" />
     <Compile Include="Infrastructure\MarkdownConverter.cs" />
     <Compile Include="Infrastructure\Sluggifier.cs" />
     <Compile Include="Models\Article\ArticleCompareModel.cs" />
     <Compile Include="Models\Article\ArticleCompareRecord.cs" />
+    <Compile Include="Models\Article\ArticleImageModel.cs" />
     <Compile Include="Models\Article\ArticleEditModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryRecord.cs" />
+    <Compile Include="Models\Article\ArticleImageRecordModel.cs" />
     <Compile Include="Models\Article\ArticleListTagsRecord.cs" />
     <Compile Include="Models\Article\ArticleReadModel.cs" />
     <Compile Include="Models\Article\ArticleSearchModel.cs" />
+    <Compile Include="Models\Article\ArticleUploadImageModel.cs" />
     <Compile Include="Models\Article\IUpdatedArticle.cs" />
     <Compile Include="Models\PermissionModel.cs" />
     <Compile Include="Models\PermissionOption.cs" />
@@ -258,14 +270,18 @@
     <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Scripts\npm.js" />
     <Content Include="Scripts\_references.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
-    <Content Include="Views\Web.config" />
+    <Content Include="Views\Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Views\Article\Compare.cshtml" />
     <Content Include="Views\Article\Edit.cshtml" />
     <Content Include="Views\Article\History.cshtml" />
@@ -277,6 +293,7 @@
     <Content Include="Views\Shared\EditorTemplates\PermissionModel.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Article\Images.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
@@ -300,7 +317,7 @@
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>55063</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
-          <IISUrl>http://localhost:55063/</IISUrl>
+          <IISUrl>http://localhost:55063</IISUrl>
           <NTLMAuthentication>False</NTLMAuthentication>
           <UseCustomServer>False</UseCustomServer>
           <CustomServerUrl>

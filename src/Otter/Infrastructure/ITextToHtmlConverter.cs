@@ -27,6 +27,6 @@ namespace Otter
 {
     public interface ITextToHtmlConverter
     {
-        string Convert(string plainText);
+        string Convert(string plainText, string articleUrlTitle);
     }
 }

@@ -35,6 +35,11 @@ namespace Otter
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
             routes.MapRoute(
+                name: "GetArticleImage",
+                url: "kb/{articleId}/img/{filename}",
+                defaults: new { controller = "Article", action = "GetImage" });
+
+            routes.MapRoute(
                 name: "ReadArticle",
                 url: "kb/{id}/{revision}",
                 defaults: new { controller = "Article", action = "Read", revision = UrlParameter.Optional });

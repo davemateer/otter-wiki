@@ -1,0 +1,95 @@
+﻿@using System.Configuration
+@using Otter.Domain
+@using Otter.Models
+@model ArticleImageModel
+@{
+  ViewBag.Title = string.Format("Images: {0}", Model.Title);
+  string articleImagesDirectory = Url.Content(string.Format("~/{0}", ConfigurationManager.AppSettings["otter:ArticleImageVirtualDirectory"]));
+}
+<h1>@ViewBag.Title</h1>
+<p><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#otter-modal-upload-image"><span class="glyphicon glyphicon glyphicon-upload"></span>&nbsp;Upload new image</button></p>
+@Html.ValidationSummary(false)
+<p><strong>Using images</strong></p>
+<p>
+  Code to include each image is provided with each image below. The syntax for including an image is <code>![alt](_img/filename.jpg "title")</code>. The <code>alt</code> value shows up as the &quot;alt&quot; text on the image (for browsers that do not display images). The
+  <code>title</code> value shows up as the image title, which will display as a tooltip on most browsers. You can change these values to whatever you would like. The <code>_img/filename.jpg</code> portion must
+  remain the same, however.
+</p>
+@foreach (ArticleImageRecordModel image in Model.Images)
+{
+  <hr />
+  <div class="row">
+    <div class="col-sm-4 col-md-3" style="text-align: center">
+      <a href="@string.Format("{0}/{1}/{2}", articleImagesDirectory, Model.UrlTitle, image.Filename)" target="_blank">
+        <img src="@string.Format("{0}/{1}/{2}?h=200&w=190&mode=max&anchor=topcenter", articleImagesDirectory, Model.UrlTitle, image.Filename)" alt="@image.Title" title="@image.Title" />
+      </a>
+      <form action="@Url.Action("DeleteImage")" method="post" class="otter-form-delete-img" style="margin-top: 6px">
+        <input type="hidden" name="ArticleImageId" value="@image.ArticleImageId" />
+        <button type="submit" class="btn btn-xs btn-default">Delete</button>
+      </form>
+    </div>
+    <div class="col-sm-8 col-md-9">
+      @if (!image.IsValid)
+      {
+        <p class="text-danger">Image is not valid.</p>
+      }
+      <dl class="dl-horizontal">
+        <dt>Title</dt>
+        <dd>@image.Title</dd>
+        @if (@image.IsValid)
+        {
+          <dt>Usage</dt>
+          <dd><code>![@image.Title](_img/@Url.Encode(image.Filename) "@image.Title")</code></dd>
+          <dt>Dimensions</dt>
+          <dd>@image.Dimensions.Width x @image.Dimensions.Height</dd>
+          <dt>Size</dt>
+          <dd>@Html.FileSize(image.Bytes)</dd>
+          <dt>Created</dt>
+          <dd>@image.CreationTime</dd>
+        }
+      </dl>
+    </div>
+  </div>
+}
+<div id="otter-modal-upload-image" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Upload new image</h4>
+      </div>
+      <div class="modal-body">
+        @using (Html.BeginForm("UploadImage", null, FormMethod.Post, new { id = "otter-upload-image-form", enctype = "multipart/form-data" }))
+        {
+          @Html.HiddenFor(m => m.ArticleId)
+          <div class="form-group">
+            <label for="UploadImageFile">Select image to upload:</label>
+            <input type="file" class="form-control" id="UploadImageFile" name="UploadImageFile" data-val="true" data-val-required="Please select an image to load." />
+            @Html.ValidationMessage("UploadImageFile")
+          </div>
+          <div class="form-group">
+            <label for="UploadImageTitle">Image title:</label>
+            @Html.TextBox("UploadImageTitle", null, new { @class = "form-control", data_val = "true", data_val_required = "Please enter a title for the image." })
+            @Html.ValidationMessage("UploadImageTitle")
+          </div>
+        }
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="$('#otter-upload-image-form').submit()">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+@section scripts
+{
+  <script type="text/javascript">
+    $(document).ready(function () {
+      $(".otter-form-delete-img").on("submit", function (e) {
+        if (!confirm("Are you sure you wish to delete this image? This will result in a broken image if the image is still referenced on the article.")) {
+          e.preventDefault();
+        }
+      });
+    })
+  </script>
+}

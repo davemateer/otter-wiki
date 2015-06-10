@@ -61,6 +61,11 @@ namespace Otter.Repository
             get { return this.context.ArticleHistory; }
         }
 
+        public IQueryable<ArticleImage> ArticleImages
+        {
+            get { return this.context.ArticleImages; }
+        }
+
         public IQueryable<Article> Articles
         {
             get { return this.context.Articles; }
@@ -115,10 +120,24 @@ namespace Otter.Repository
             return false;
         }
 
+        public void DeleteArticleImage(int articleImageId)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.up_ArticleImage_Delete";
+                cmd.Parameters.AddWithValue("@ArticleImageId", articleImageId);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public string GetRevisionHtml(int articleId, int revision)
         {
+            Article article = this.Articles.Single(a => a.ArticleId == articleId);
             string text = this.GetRevisionText(articleId, revision);
-            return this.converter.Convert(text);
+            return this.converter.Convert(text, article.UrlTitle);
         }
 
         public string GetRevisionText(int articleId, int revision)
@@ -313,7 +332,7 @@ namespace Otter.Repository
             }
 
             // TODO: Ensure url title is unique
-            string html = this.converter.Convert(text);
+            string html = this.converter.Convert(text, urlTitle);
 
             using (var scope = new TransactionScope())
             {
@@ -400,6 +419,21 @@ namespace Otter.Repository
             }
 
             return urlTitle;
+        }
+
+        public void InsertArticleImage(int articleId, string filename, string title)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.up_ArticleImage_Insert";
+                cmd.Parameters.AddWithValue("@ArticleId", articleId);
+                cmd.Parameters.AddWithValue("@Filename", filename);
+                cmd.Parameters.AddWithValue("@Title", title);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)
@@ -533,7 +567,7 @@ namespace Otter.Repository
             // Update existing record.
             using (var scope = new TransactionScope())
             {
-                string html = this.converter.Convert(text);
+                string html = this.converter.Convert(text, urlTitle);
 
                 var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString);
                 var cmd = conn.CreateCommand();

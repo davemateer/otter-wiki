@@ -43,6 +43,11 @@ namespace Otter.Repository.Concrete
             get { return this.Set<ArticleHistory>(); }
         }
 
+        public DbSet<ArticleImage> ArticleImages
+        {
+            get { return this.Set<ArticleImage>(); }
+        }
+
         public DbSet<Article> Articles
         {
             get { return this.Set<Article>(); }

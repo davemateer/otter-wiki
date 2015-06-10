@@ -32,6 +32,8 @@ namespace Otter.Repository.Abstract
     {
         DbSet<ArticleHistory> ArticleHistory { get; }
 
+        DbSet<ArticleImage> ArticleImages { get; }
+
         DbSet<Article> Articles { get; }
 
         DbSet<ArticleSecurity> ArticleSecurity { get; }

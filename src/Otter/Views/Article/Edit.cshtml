@@ -12,9 +12,17 @@
   </div>
   <div class="form-group">
     <label for="Text">Edit the article text using @Html.ActionLink("Markdown syntax", "Read", new { id = "markdown-syntax-help" }):</label>
+    @if (Model.IsNewArticle)
+    {
+      <span class="text-info">(Images can be added by editing the article after it has been created initially.)</span>
+    }
     @Html.TextAreaFor(m => m.Text, new { @class = "form-control otter-monospace", rows = 10 })
     @Html.ValidationMessageFor(m => m.Text)
   </div>
+  if (!Model.IsNewArticle)
+  {
+    <p><a target="OtterImages" href="@Url.Action("Images", new { id = @Model.UrlTitle })" class="btn btn-default"><span class="glyphicon glyphicon-picture"></span>&nbsp;Article images (@Model.ImageCount)</a></p>
+  }
   <label>Preview:</label>
   <div id="Preview">
   </div>
@@ -37,6 +45,7 @@
     @Html.HiddenFor(m => m.UpdatedDtm)
     @Html.HiddenFor(m => m.Revision)
     @Html.HiddenFor(m => m.UrlTitle)
+    @Html.HiddenFor(m => m.ImageCount)
   }
   <button type="submit" value="" class="btn btn-primary">@(Model.IsNewArticle ? "Save" : "Save changes")</button>
   if (Model.IsNewArticle)
@@ -79,7 +88,11 @@
       $.ajax({
         url: '@Url.Action("Preview")',
         type: 'POST',
-        data: { 'id': requestId, 'text': $("#Text").val() },
+        data: {
+          'id': requestId,
+          'text': $("#Text").val(),
+          'articleId': @Html.Raw(HttpUtility.JavaScriptStringEncode(Model.UrlTitle, true))
+          },
         success: function (data) {
           if (data.id == requestId) {
             $('#Preview').html(data.html);

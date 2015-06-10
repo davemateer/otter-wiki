@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------
-// <copyright file="NinjectDependencyResolver.cs" company="Dave Mateer">
+// <copyright file="NinjectWebCommon.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
-// Copyright (c) 2014 Dave Mateer
+// Copyright (c) 2015 Dave Mateer
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,18 +39,18 @@ namespace Otter
 
     public static class NinjectWebCommon
     {
-        private static readonly Bootstrapper bootstrapper = new Bootstrapper();
+        private static readonly Bootstrapper ApplicationBootstrapper = new Bootstrapper();
 
         public static void Start()
         {
             DynamicModuleUtility.RegisterModule(typeof(OnePerRequestHttpModule));
             DynamicModuleUtility.RegisterModule(typeof(NinjectHttpModule));
-            bootstrapper.Initialize(CreateKernel);
+            ApplicationBootstrapper.Initialize(CreateKernel);
         }
 
         public static void Stop()
         {
-            bootstrapper.ShutDown();
+            ApplicationBootstrapper.ShutDown();
         }
 
         private static IKernel CreateKernel()

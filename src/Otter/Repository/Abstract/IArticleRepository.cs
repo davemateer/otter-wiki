@@ -36,6 +36,8 @@ namespace Otter.Repository
     {
         IQueryable<ArticleHistory> ArticleHistory { get; }
 
+        IQueryable<ArticleImage> ArticleImages { get; }
+
         IQueryable<Article> Articles { get; }
 
         IQueryable<ArticleSecurity> ArticleSecurity { get; }
@@ -46,6 +48,8 @@ namespace Otter.Repository
 
         bool CanView(IPrincipal user, int articleId);
 
+        void DeleteArticleImage(int articleImageId);
+
         string GetRevisionHtml(int articleId, int revision);
 
         string GetRevisionText(int articleId, int revision);
@@ -55,6 +59,8 @@ namespace Otter.Repository
         void HydratePermissionModel(PermissionModel model, int articleId, string userId);
 
         string InsertArticle(string title, string text, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
+
+        void InsertArticleImage(int articleId, string filename, string title);
 
         IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
 

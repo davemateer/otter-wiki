@@ -38,9 +38,17 @@ namespace Otter
     {
         private static readonly Dictionary<string, string[]> Whitelist = CreateWhitelist();
 
-        public string Convert(string plainText)
+        public string Convert(string plainText, string articleUrlTitle)
         {
+            // Render tables
             string html = Regex.Replace(plainText, @"^\s*\{\|.*?\|}\s*$", new MatchEvaluator(RenderTable), RegexOptions.Singleline | RegexOptions.Multiline);
+
+            // Replace article path
+            if (!string.IsNullOrEmpty(articleUrlTitle))
+            {
+                html = Regex.Replace(plainText, @"(!\[[^\]]*]\()_img/(\S+)", string.Format("$1%ARTICLE_IMAGES%/{0}/$2", articleUrlTitle));
+            }
+
             html = CommonMarkConverter.Convert(html);
             html = Purify(html);
             return html;
@@ -76,7 +84,7 @@ namespace Otter
             list.Add("td", null);
             list.Add("th", null);
 
-            list.Add("img", new string[] { "alt", "src" });
+            list.Add("img", new string[] { "alt", "src", "title" });
 
             return list;
         }

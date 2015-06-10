@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="BundleConfig.cs" company="Dave Mateer">
+// <copyright file="HtmlHelperExtensions.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -25,15 +25,20 @@
 //-----------------------------------------------------------------------
 namespace Otter
 {
-    using System.Web.Optimization;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using System.Web.Mvc;
 
-    public static class BundleConfig
+    public static class HtmlHelperExtensions
     {
-        public static void RegisterBundles(BundleCollection bundles)
+        public static string FileSize(this HtmlHelper html, long bytes)
         {
-            bundles.Add(new ScriptBundle("~/bundles/scripts/common").Include("~/Scripts/jquery-{version}.js", "~/Scripts/bootstrap.js", "~/Scripts/jquery-ui.js", "~/Scripts/jquery.validate.js", "~/Scripts/jquery.validate.unobtrusive.js", "~/Scripts/main.js"));
-            bundles.Add(new StyleBundle("~/bundles/css/common").Include("~/Content/jquery-ui.css", "~/Content/bootstrap.css", "~/Content/bootstrap-theme.css", "~/Content/otter.css"));
-            BundleTable.EnableOptimizations = true;
+            StringBuilder sb = new StringBuilder(11);
+            StrFormatByteSize(bytes, sb, sb.Capacity);
+            return sb.ToString();
         }
+
+        [DllImport("Shlwapi.dll", CharSet = CharSet.Auto)]
+        public static extern long StrFormatByteSize(long fileSize, StringBuilder buffer, int bufferSize);
     }
 }

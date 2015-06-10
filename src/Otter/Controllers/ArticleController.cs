@@ -27,20 +27,28 @@ namespace Otter.Controllers
 {
     using System;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Diagnostics;
     using System.DirectoryServices.AccountManagement;
+    using System.Drawing;
+    using System.Drawing.Imaging;
     using System.Globalization;
+    using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using System.Web;
     using System.Web.Mvc;
     using AutoMapper;
     using DiffMatchPatch;
+    using HtmlAgilityPack;
     using Otter.Domain;
     using Otter.Models;
     using Otter.Repository;
 
     public class ArticleController : Controller
     {
+        private static readonly string ArticleImageVirtualDirectory = ConfigurationManager.AppSettings["otter:ArticleImageVirtualDirectory"];
+        private static readonly int MaxImageUploadBytes = int.Parse(ConfigurationManager.AppSettings["otter:MaxImageUploadBytes"]);
         private readonly IArticleRepository articleRepository;
         private readonly ITextToHtmlConverter htmlConverter;
         private readonly ISecurityRepository securityRepository;
@@ -140,6 +148,32 @@ namespace Otter.Controllers
             return this.RedirectToAction("Read", new { id = title });
         }
 
+        [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult DeleteImage(int articleImageId)
+        {
+            ArticleImage image = this.articleRepository.ArticleImages.SingleOrDefault(i => i.ArticleImageId == articleImageId);
+            if (image == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == image.ArticleId);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            this.articleRepository.DeleteArticleImage(articleImageId);
+            string imagePath = GetImagePath(article.UrlTitle, image.Filename);
+            System.IO.File.Delete(imagePath);
+            return this.RedirectToAction("Images", new { id = article.UrlTitle });
+        }
+
         [HttpGet]
         public ActionResult Edit(string id)
         {
@@ -156,6 +190,7 @@ namespace Otter.Controllers
 
             var model = Mapper.Map<ArticleEditModel>(article);
             model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
+            model.ImageCount = this.articleRepository.ArticleImages.Count(i => i.ArticleId == article.ArticleId);
 
             model.Security = new PermissionModel();
             this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
@@ -231,6 +266,24 @@ namespace Otter.Controllers
         }
 
         [HttpGet]
+        public ActionResult Images(string id)
+        {
+            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            ArticleImageModel model = this.BuildArticleImageModel(article);
+            return this.View(model);
+        }
+
+        [HttpGet]
         public ActionResult Index()
         {
             return this.View();
@@ -246,12 +299,12 @@ namespace Otter.Controllers
 
         [HttpPost]
         [ValidateInput(false)]
-        public ActionResult Preview(string id, string text)
+        public ActionResult Preview(string id, string text, string articleId)
         {
             return this.Json(new
             {
                 id = id,
-                html = this.htmlConverter.Convert(text)
+                html = ResolveApplicationPaths(this.htmlConverter.Convert(text, articleId))
             });
         }
 
@@ -280,7 +333,7 @@ namespace Otter.Controllers
                 }
 
                 model = Mapper.Map<ArticleReadModel>(articleRevision);
-                model.Html = articleRevision.Text == null ? this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision) : this.htmlConverter.Convert(articleRevision.Text);
+                model.Html = articleRevision.Text == null ? this.articleRepository.GetRevisionHtml(articleRevision.ArticleId, articleRevision.Revision) : this.htmlConverter.Convert(articleRevision.Text, article.UrlTitle);
                 model.UrlTitle = article.UrlTitle;
             }
             else
@@ -288,6 +341,7 @@ namespace Otter.Controllers
                 model = Mapper.Map<ArticleReadModel>(article);
             }
 
+            model.Html = ResolveApplicationPaths(model.Html);
             this.SetUpdatedDisplayName(model);
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
 
@@ -347,6 +401,71 @@ namespace Otter.Controllers
             };
 
             return this.View("Search", model);
+        }
+
+        [HttpPost]
+        public ActionResult UploadImage(ArticleUploadImageModel model)
+        {
+            Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == model.ArticleId);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (this.ModelState.IsValid)
+            {
+                if (!this.articleRepository.CanModify(this.User, model.ArticleId.Value))
+                {
+                    return new HttpUnauthorizedResult();
+                }
+
+                // Ensure that the uploaded file is an image, and that it does not exceed the
+                // maximum size.
+                if (!IsValidImage(model.UploadImageFile))
+                {
+                    this.ModelState.AddModelError("UploadImageFile", string.Format("The uploaded file must be a valid image file under {0} bytes in size.", MaxImageUploadBytes));
+                }
+            }
+
+            if (!this.ModelState.IsValid)
+            {
+                ArticleImageModel imageModel = this.BuildArticleImageModel(article);
+                return this.View("Images", imageModel);
+            }
+
+            string filename = this.CreateUniqueArticleImageFilename(model.ArticleId.Value, model.UploadImageFile.FileName);
+            string saveAsPath = GetImagePath(article.UrlTitle, filename);
+            Directory.CreateDirectory(Path.GetDirectoryName(saveAsPath));
+            model.UploadImageFile.SaveAs(saveAsPath);
+            this.articleRepository.InsertArticleImage(model.ArticleId.Value, filename, model.UploadImageTitle);
+
+            return this.RedirectToAction("Images", new { id = article.UrlTitle });
+        }
+
+        private static string GetImagePath(string urlTitle, string filename)
+        {
+            return Path.Combine(ConfigurationManager.AppSettings["otter:ArticleImageFolder"], urlTitle, filename);
+        }
+
+        private static bool IsValidImage(HttpPostedFileBase postedFile)
+        {
+            if (postedFile.ContentLength > MaxImageUploadBytes)
+            {
+                return false;
+            }
+
+            try
+            {
+                ImageFormat[] allowedFormats = new[] { ImageFormat.Jpeg, ImageFormat.Png, ImageFormat.Gif, ImageFormat.Bmp };
+                using (Image img = Image.FromStream(postedFile.InputStream))
+                {
+                    return allowedFormats.Contains(img.RawFormat);
+                }
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
 
         private static List<ArticleSecurity> PopulateSecurityRecords(PermissionModel model, ModelStateDictionary modelState, string userId, ISecurityRepository securityRepository)
@@ -482,6 +601,33 @@ namespace Otter.Controllers
             return security;
         }
 
+        private static string ResolveApplicationPaths(string html)
+        {
+            HtmlDocument doc = new HtmlDocument()
+            {
+                OptionFixNestedTags = true,
+                OptionAutoCloseOnEnd = true
+            };
+
+            doc.LoadHtml(html);
+
+            HtmlNodeCollection imgNodes = doc.DocumentNode.SelectNodes("//img");
+            if (imgNodes != null)
+            {
+                foreach (HtmlNode img in doc.DocumentNode.SelectNodes("//img"))
+                {
+                    HtmlAttribute src = img.Attributes["src"];
+                    if (src.Value.StartsWith("%ARTICLE_IMAGES%/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        img.Attributes.Add("class", "img-responsive");
+                        src.Value = src.Value.Replace("%ARTICLE_IMAGES%/", VirtualPathUtility.ToAbsolute(string.Format("~/{0}/", ArticleImageVirtualDirectory)));
+                    }
+                }
+            }
+
+            return doc.DocumentNode.OuterHtml;
+        }
+
         private static List<string> SplitTags(string input)
         {
             var tags = new List<string>();
@@ -504,6 +650,72 @@ namespace Otter.Controllers
             }
 
             return tags;
+        }
+
+        private ArticleImageModel BuildArticleImageModel(Article article)
+        {
+            IEnumerable<ArticleImage> images = this.articleRepository.ArticleImages.Where(i => i.ArticleId == article.ArticleId);
+            List<ArticleImageRecordModel> imageRecords = new List<ArticleImageRecordModel>(images.Count());
+            foreach (ArticleImage image in images)
+            {
+                ArticleImageRecordModel record = new ArticleImageRecordModel
+                {
+                    ArticleId = image.ArticleId,
+                    ArticleImageId = image.ArticleImageId,
+                    Filename = image.Filename,
+                    IsValid = false,
+                    Title = image.Title
+                };
+
+                string imagePath = GetImagePath(article.UrlTitle, image.Filename);
+                FileInfo imageInfo = new FileInfo(imagePath);
+                if (imageInfo.Exists)
+                {
+                    record.Bytes = imageInfo.Length;
+                    record.CreationTime = imageInfo.CreationTime;
+                    try
+                    {
+                        using (Image img = Image.FromFile(imagePath))
+                        {
+                            record.Dimensions = img.Size;
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                    }
+
+                    record.IsValid = true;
+                }
+
+                imageRecords.Add(record);
+            }
+
+            ArticleImageModel model = new ArticleImageModel
+            {
+                ArticleId = article.ArticleId,
+                Images = imageRecords,
+                Title = article.Title,
+                UrlTitle = article.UrlTitle
+            };
+
+            return model;
+        }
+
+        private string CreateUniqueArticleImageFilename(int articleId, string baseFilename)
+        {
+            string filename = Path.GetFileName(baseFilename);
+            ArticleImage[] existingImages = this.articleRepository.ArticleImages.Where(i => i.ArticleId == articleId).ToArray();
+            if (existingImages.Any(i => i.Filename.Equals(filename, StringComparison.OrdinalIgnoreCase)))
+            {
+                int suffix = 1;
+                do
+                {
+                    filename = string.Format("{0}-{1}{2}", Path.GetFileNameWithoutExtension(baseFilename), suffix++, Path.GetExtension(baseFilename));
+                }
+                while (existingImages.Any(i => i.Filename.Equals(filename, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return filename;
         }
 
         private void SetUpdatedDisplayName(IUpdatedArticle article)

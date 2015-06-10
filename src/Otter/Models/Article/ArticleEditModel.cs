@@ -38,6 +38,9 @@ namespace Otter.Models
         public string Comment { get; set; }
 
         [IgnoreMap]
+        public int ImageCount { get; set; }
+
+        [IgnoreMap]
         public bool IsNewArticle { get; set; }
 
         public int Revision { get; set; }

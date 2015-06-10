@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="BundleConfig.cs" company="Dave Mateer">
+// <copyright file="ArticleImageModel.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -23,17 +23,18 @@
 // THE SOFTWARE.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace Otter
+namespace Otter.Models
 {
-    using System.Web.Optimization;
+    using System.Collections.Generic;
 
-    public static class BundleConfig
+    public sealed class ArticleImageModel
     {
-        public static void RegisterBundles(BundleCollection bundles)
-        {
-            bundles.Add(new ScriptBundle("~/bundles/scripts/common").Include("~/Scripts/jquery-{version}.js", "~/Scripts/bootstrap.js", "~/Scripts/jquery-ui.js", "~/Scripts/jquery.validate.js", "~/Scripts/jquery.validate.unobtrusive.js", "~/Scripts/main.js"));
-            bundles.Add(new StyleBundle("~/bundles/css/common").Include("~/Content/jquery-ui.css", "~/Content/bootstrap.css", "~/Content/bootstrap-theme.css", "~/Content/otter.css"));
-            BundleTable.EnableOptimizations = true;
-        }
+        public int ArticleId { get; set; }
+
+        public IEnumerable<ArticleImageRecordModel> Images { get; set; }
+
+        public string Title { get; set; }
+
+        public string UrlTitle { get; set; }
     }
 }
