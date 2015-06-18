@@ -1,0 +1,36 @@
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[ArticleAttachment](
+	[ArticleAttachmentId] [int] IDENTITY(1,1) NOT NULL,
+	[ArticleId] [int] NOT NULL,
+	[Filename] [varchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[Title] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+ CONSTRAINT [PK_ArticleAttachment] PRIMARY KEY CLUSTERED 
+(
+	[ArticleAttachmentId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING ON
+
+GO
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_ArticleId_Filename] ON [dbo].[ArticleAttachment]
+(
+	[ArticleId] ASC,
+	[Filename] ASC
+)
+INCLUDE ( 	[Title]) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ArticleAttachment]  WITH CHECK ADD  CONSTRAINT [FK_ArticleAttachment_Article] FOREIGN KEY([ArticleId])
+REFERENCES [dbo].[Article] ([ArticleId])
+GO
+
+ALTER TABLE [dbo].[ArticleAttachment] CHECK CONSTRAINT [FK_ArticleAttachment_Article]

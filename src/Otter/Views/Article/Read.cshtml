@@ -15,6 +15,13 @@
 <div class="row">
   <div id="article-content" class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
     @Html.Raw(Model.Html)
+    @if (this.Model.Attachments.Any())
+    {
+      <div class="otter-attachment">
+        <header>@string.Format("{0} attachment{1}:", this.Model.Attachments.Count(), this.Model.Attachments.Count() == 1 ? string.Empty : "s")</header>
+        @{Html.RenderPartial("Attachments", this.Model.Attachments);}
+      </div>
+    }
     <p class="text-muted"><small>@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</small></p>
   </div>
   <div class="hidden-print col-lg-2 col-md-2 col-sm-3 hidden-xs">

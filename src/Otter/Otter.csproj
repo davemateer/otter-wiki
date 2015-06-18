@@ -161,6 +161,7 @@
     <Compile Include="Domain\Article.cs" />
     <Compile Include="Domain\ArticleBase.cs" />
     <Compile Include="Domain\ArticleHistory.cs" />
+    <Compile Include="Domain\ArticleAttachment.cs" />
     <Compile Include="Domain\ArticleImage.cs" />
     <Compile Include="Domain\ArticleSearchResult.cs" />
     <Compile Include="Domain\ArticleSecurity.cs" />
@@ -175,6 +176,7 @@
     <Compile Include="Infrastructure\HtmlHelperExtensions.cs" />
     <Compile Include="Infrastructure\ITextToHtmlConverter.cs" />
     <Compile Include="Infrastructure\MarkdownConverter.cs" />
+    <Compile Include="Infrastructure\NativeMethods.cs" />
     <Compile Include="Infrastructure\Sluggifier.cs" />
     <Compile Include="Models\Article\ArticleCompareModel.cs" />
     <Compile Include="Models\Article\ArticleCompareRecord.cs" />
@@ -182,11 +184,12 @@
     <Compile Include="Models\Article\ArticleEditModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryModel.cs" />
     <Compile Include="Models\Article\ArticleHistoryRecord.cs" />
+    <Compile Include="Models\Article\ArticleAttachmentRecordModel.cs" />
     <Compile Include="Models\Article\ArticleImageRecordModel.cs" />
     <Compile Include="Models\Article\ArticleListTagsRecord.cs" />
     <Compile Include="Models\Article\ArticleReadModel.cs" />
     <Compile Include="Models\Article\ArticleSearchModel.cs" />
-    <Compile Include="Models\Article\ArticleUploadImageModel.cs" />
+    <Compile Include="Models\Article\ArticleUploadFileModel.cs" />
     <Compile Include="Models\Article\IUpdatedArticle.cs" />
     <Compile Include="Models\PermissionModel.cs" />
     <Compile Include="Models\PermissionOption.cs" />
@@ -293,6 +296,7 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Article\Images.cshtml" />
+    <Content Include="Views\Article\Attachments.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

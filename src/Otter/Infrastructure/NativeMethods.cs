@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="HtmlHelperExtensions.cs" company="Dave Mateer">
+// <copyright file="NativeMethods.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -25,21 +25,12 @@
 //-----------------------------------------------------------------------
 namespace Otter
 {
+    using System.Runtime.InteropServices;
     using System.Text;
-    using System.Web.Mvc;
 
-    public static class HtmlHelperExtensions
+    internal static class NativeMethods
     {
-        public static string FileSize(long bytes)
-        {
-            StringBuilder sb = new StringBuilder(11);
-            NativeMethods.StrFormatByteSize(bytes, sb, sb.Capacity);
-            return sb.ToString();
-        }
-
-        public static string FileSize(this HtmlHelper html, long bytes)
-        {
-            return FileSize(bytes);
-        }
+        [DllImport("Shlwapi.dll", CharSet = CharSet.Unicode)]
+        internal static extern long StrFormatByteSize(long fileSize, StringBuilder buffer, int bufferSize);
     }
 }

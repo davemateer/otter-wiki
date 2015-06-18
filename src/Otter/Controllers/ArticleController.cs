@@ -35,6 +35,7 @@ namespace Otter.Controllers
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Net.Mime;
     using System.Text.RegularExpressions;
     using System.Web;
     using System.Web.Mvc;
@@ -48,6 +49,7 @@ namespace Otter.Controllers
     public class ArticleController : Controller
     {
         private static readonly string ArticleImageVirtualDirectory = ConfigurationManager.AppSettings["otter:ArticleImageVirtualDirectory"];
+        private static readonly int MaxAttachmentUploadBytes = int.Parse(ConfigurationManager.AppSettings["otter:MaxAttachmentUploadBytes"]);
         private static readonly int MaxImageUploadBytes = int.Parse(ConfigurationManager.AppSettings["otter:MaxImageUploadBytes"]);
         private readonly IArticleRepository articleRepository;
         private readonly ITextToHtmlConverter htmlConverter;
@@ -149,6 +151,35 @@ namespace Otter.Controllers
         }
 
         [AcceptVerbs(HttpVerbs.Post)]
+        public ActionResult DeleteAttachment(int id)
+        {
+            ArticleAttachment attachment = this.articleRepository.ArticleAttachments.SingleOrDefault(i => i.ArticleAttachmentId == id);
+            if (attachment == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == attachment.ArticleId);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanModify(this.User, article.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            this.articleRepository.DeleteArticleAttachment(id);
+            string attachmentPath = GetAttachmentPath(article.UrlTitle, attachment.Filename);
+            System.IO.File.Delete(attachmentPath);
+
+            IEnumerable<ArticleAttachmentRecordModel> attachments = this.BuildArticleAttachmentRecordModels(article);
+            this.ViewData["edit"] = true;
+            return this.PartialView("Attachments", attachments);
+        }
+
+        [AcceptVerbs(HttpVerbs.Post)]
         public ActionResult DeleteImage(int articleImageId)
         {
             ArticleImage image = this.articleRepository.ArticleImages.SingleOrDefault(i => i.ArticleImageId == articleImageId);
@@ -174,6 +205,33 @@ namespace Otter.Controllers
             return this.RedirectToAction("Images", new { id = article.UrlTitle });
         }
 
+        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Head)]
+        public ActionResult DownloadAttachment(int id)
+        {
+            ArticleAttachment attachment = this.articleRepository.ArticleAttachments.SingleOrDefault(a => a.ArticleAttachmentId == id);
+            if (attachment == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanView(this.User, attachment.ArticleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            ContentDisposition contentDisposition = new ContentDisposition
+            {
+                FileName = attachment.Filename,
+                Inline = false
+            };
+
+            this.Response.AppendHeader("Content-Disposition", contentDisposition.ToString());
+
+            string urlTitle = this.articleRepository.Articles.Single(a => a.ArticleId == attachment.ArticleId).UrlTitle;
+            string attachmentPath = GetAttachmentPath(urlTitle, attachment.Filename);
+            return this.File(attachmentPath, "application/octet-stream");
+        }
+
         [HttpGet]
         public ActionResult Edit(string id)
         {
@@ -189,8 +247,9 @@ namespace Otter.Controllers
             }
 
             var model = Mapper.Map<ArticleEditModel>(article);
-            model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
+            model.Attachments = this.BuildArticleAttachmentRecordModels(article);
             model.ImageCount = this.articleRepository.ArticleImages.Count(i => i.ArticleId == article.ArticleId);
+            model.Tags = string.Join(", ", this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag));
 
             model.Security = new PermissionModel();
             this.articleRepository.HydratePermissionModel(model.Security, article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
@@ -344,7 +403,7 @@ namespace Otter.Controllers
             model.Html = ResolveApplicationPaths(model.Html);
             this.SetUpdatedDisplayName(model);
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
-
+            model.Attachments = this.BuildArticleAttachmentRecordModels(article);
             return this.View(model);
         }
 
@@ -404,7 +463,44 @@ namespace Otter.Controllers
         }
 
         [HttpPost]
-        public ActionResult UploadImage(ArticleUploadImageModel model)
+        public ActionResult UploadAttachment(ArticleUploadFileModel model)
+        {
+            Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == model.ArticleId);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (this.ModelState.IsValid)
+            {
+                if (!this.articleRepository.CanModify(this.User, model.ArticleId.Value))
+                {
+                    return new HttpUnauthorizedResult();
+                }
+
+                // Ensure that the uploaded file does not exceed the maximum size.
+                if (!IsValidAttachment(model.UploadFile))
+                {
+                    this.ModelState.AddModelError("UploadFile", string.Format("The uploaded file must be a valid image file under {0} in size.", HtmlHelperExtensions.FileSize(MaxAttachmentUploadBytes)));
+                }
+            }
+
+            if (this.ModelState.IsValid)
+            {
+                string filename = this.CreateUniqueArticleAttachmentFilename(model.ArticleId.Value, model.UploadFile.FileName);
+                string saveAsPath = GetAttachmentPath(article.UrlTitle, filename);
+                Directory.CreateDirectory(Path.GetDirectoryName(saveAsPath));
+                model.UploadFile.SaveAs(saveAsPath);
+                this.articleRepository.InsertArticleAttachment(model.ArticleId.Value, filename, model.UploadTitle);
+            }
+
+            IEnumerable<ArticleAttachmentRecordModel> attachments = this.BuildArticleAttachmentRecordModels(article);
+            this.ViewData["edit"] = true;
+            return this.PartialView("Attachments", attachments);
+        }
+
+        [HttpPost]
+        public ActionResult UploadImage(ArticleUploadFileModel model)
         {
             Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == model.ArticleId);
             if (article == null)
@@ -421,9 +517,9 @@ namespace Otter.Controllers
 
                 // Ensure that the uploaded file is an image, and that it does not exceed the
                 // maximum size.
-                if (!IsValidImage(model.UploadImageFile))
+                if (!IsValidImage(model.UploadFile))
                 {
-                    this.ModelState.AddModelError("UploadImageFile", string.Format("The uploaded file must be a valid image file under {0} bytes in size.", MaxImageUploadBytes));
+                    this.ModelState.AddModelError("UploadFile", string.Format("The uploaded file must be a valid image file under {0} in size.", HtmlHelperExtensions.FileSize(MaxImageUploadBytes)));
                 }
             }
 
@@ -433,18 +529,28 @@ namespace Otter.Controllers
                 return this.View("Images", imageModel);
             }
 
-            string filename = this.CreateUniqueArticleImageFilename(model.ArticleId.Value, model.UploadImageFile.FileName);
+            string filename = this.CreateUniqueArticleImageFilename(model.ArticleId.Value, model.UploadFile.FileName);
             string saveAsPath = GetImagePath(article.UrlTitle, filename);
             Directory.CreateDirectory(Path.GetDirectoryName(saveAsPath));
-            model.UploadImageFile.SaveAs(saveAsPath);
-            this.articleRepository.InsertArticleImage(model.ArticleId.Value, filename, model.UploadImageTitle);
+            model.UploadFile.SaveAs(saveAsPath);
+            this.articleRepository.InsertArticleImage(model.ArticleId.Value, filename, model.UploadTitle);
 
             return this.RedirectToAction("Images", new { id = article.UrlTitle });
+        }
+
+        private static string GetAttachmentPath(string urlTitle, string filename)
+        {
+            return Path.Combine(ConfigurationManager.AppSettings["otter:ArticleAttachmentFolder"], urlTitle, filename);
         }
 
         private static string GetImagePath(string urlTitle, string filename)
         {
             return Path.Combine(ConfigurationManager.AppSettings["otter:ArticleImageFolder"], urlTitle, filename);
+        }
+
+        private static bool IsValidAttachment(HttpPostedFileBase postedFile)
+        {
+            return postedFile.ContentLength <= MaxAttachmentUploadBytes;
         }
 
         private static bool IsValidImage(HttpPostedFileBase postedFile)
@@ -652,6 +758,36 @@ namespace Otter.Controllers
             return tags;
         }
 
+        private IEnumerable<ArticleAttachmentRecordModel> BuildArticleAttachmentRecordModels(Article article)
+        {
+            IEnumerable<ArticleAttachment> attachments = this.articleRepository.ArticleAttachments.Where(a => a.ArticleId == article.ArticleId);
+            List<ArticleAttachmentRecordModel> attachmentRecords = new List<ArticleAttachmentRecordModel>(attachments.Count());
+            foreach (ArticleAttachment attachment in attachments)
+            {
+                ArticleAttachmentRecordModel record = new ArticleAttachmentRecordModel
+                {
+                    ArticleId = attachment.ArticleId,
+                    ArticleAttachmentId = attachment.ArticleAttachmentId,
+                    Filename = attachment.Filename,
+                    IsValid = false,
+                    Title = attachment.Title
+                };
+
+                string attachmentPath = GetAttachmentPath(article.UrlTitle, attachment.Filename);
+                FileInfo attachmentInfo = new FileInfo(attachmentPath);
+                if (attachmentInfo.Exists)
+                {
+                    record.Bytes = attachmentInfo.Length;
+                    record.CreationTime = attachmentInfo.CreationTime;
+                    record.IsValid = true;
+                }
+
+                attachmentRecords.Add(record);
+            }
+
+            return attachmentRecords.OrderBy(a => a.IsValid).ThenBy(a => a.CreationTime);
+        }
+
         private ArticleImageModel BuildArticleImageModel(Article article)
         {
             IEnumerable<ArticleImage> images = this.articleRepository.ArticleImages.Where(i => i.ArticleId == article.ArticleId);
@@ -699,6 +835,23 @@ namespace Otter.Controllers
             };
 
             return model;
+        }
+
+        private string CreateUniqueArticleAttachmentFilename(int articleId, string baseFilename)
+        {
+            string filename = Path.GetFileName(baseFilename);
+            ArticleAttachment[] existingAttachments = this.articleRepository.ArticleAttachments.Where(a => a.ArticleId == articleId).ToArray();
+            if (existingAttachments.Any(i => i.Filename.Equals(filename, StringComparison.OrdinalIgnoreCase)))
+            {
+                int suffix = 1;
+                do
+                {
+                    filename = string.Format("{0}-{1}{2}", Path.GetFileNameWithoutExtension(baseFilename), suffix++, Path.GetExtension(baseFilename));
+                }
+                while (existingAttachments.Any(i => i.Filename.Equals(filename, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return filename;
         }
 
         private string CreateUniqueArticleImageFilename(int articleId, string baseFilename)

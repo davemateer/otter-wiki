@@ -38,6 +38,11 @@ namespace Otter.Repository.Concrete
             Database.SetInitializer<ApplicationDbContext>(null);
         }
 
+        public DbSet<ArticleAttachment> ArticleAttachments
+        {
+            get { return this.Set<ArticleAttachment>(); }
+        }
+
         public DbSet<ArticleHistory> ArticleHistory
         {
             get { return this.Set<ArticleHistory>(); }

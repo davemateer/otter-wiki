@@ -1,0 +1,41 @@
+﻿@using Otter.Models
+@model IEnumerable<ArticleAttachmentRecordModel>
+@{
+  bool canEdit = this.ViewData["edit"] != null && this.ViewData["edit"] is bool && (bool)this.ViewData["edit"];
+}
+@if (this.Model.Any())
+{
+  <table class="otter-attachment">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Created</th>
+        <th>Size</th>
+        <th>Type</th>
+        <th></th>
+        @if (canEdit)
+        {
+          <th></th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (ArticleAttachmentRecordModel record in this.Model)
+      {
+        <tr>
+          <td>@record.Title</td>
+          <td>@record.CreationTime</td>
+          <td>@Html.FileSize(record.Bytes)</td>
+          <td>@Path.GetExtension(record.Filename)</td>
+          <td><a href="@Url.Action("DownloadAttachment", new { id = record.ArticleAttachmentId })" class="btn btn-xs btn-default"><span class="glyphicon glyphicon-download-alt"></span>&nbsp;Download</a></td>
+          @if (canEdit)
+          {
+            <td>
+              <button data-attachmentid="@record.ArticleAttachmentId" type="button" class="otter-attachment-delete btn btn-xs btn-danger"><span class="glyphicon glyphicon-remove"></span>&nbsp;Delete</button>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+}

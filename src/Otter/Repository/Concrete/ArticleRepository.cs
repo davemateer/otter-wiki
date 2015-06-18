@@ -56,6 +56,11 @@ namespace Otter.Repository
             this.securityRepository = securityRepository;
         }
 
+        public IQueryable<ArticleAttachment> ArticleAttachments
+        {
+            get { return this.context.ArticleAttachments; }
+        }
+
         public IQueryable<ArticleHistory> ArticleHistory
         {
             get { return this.context.ArticleHistory; }
@@ -118,6 +123,19 @@ namespace Otter.Repository
             }
 
             return false;
+        }
+
+        public void DeleteArticleAttachment(int articleAttachmentId)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.up_ArticleAttachment_Delete";
+                cmd.Parameters.AddWithValue("@ArticleAttachmentId", articleAttachmentId);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public void DeleteArticleImage(int articleImageId)
@@ -419,6 +437,21 @@ namespace Otter.Repository
             }
 
             return urlTitle;
+        }
+
+        public void InsertArticleAttachment(int articleId, string filename, string title)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.up_ArticleAttachment_Insert";
+                cmd.Parameters.AddWithValue("@ArticleId", articleId);
+                cmd.Parameters.AddWithValue("@Filename", filename);
+                cmd.Parameters.AddWithValue("@Title", title);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
         }
 
         public void InsertArticleImage(int articleId, string filename, string title)

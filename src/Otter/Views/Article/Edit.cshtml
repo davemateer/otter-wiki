@@ -1,6 +1,7 @@
 ﻿@model Otter.Models.ArticleEditModel
 @{
   ViewBag.Title = Model.IsNewArticle ? "Create new article" : Model.Title;
+  string maxAttachmentUploadBytes = Html.FileSize(Convert.ToInt64(int.Parse(System.Configuration.ConfigurationManager.AppSettings["otter:MaxAttachmentUploadBytes"])));
 }
 <h1>@ViewBag.Title</h1>
 @using (Html.BeginForm(Model.IsNewArticle ? "Create" : "Edit", "Article", FormMethod.Post, new { id = "edit-form", role = "form" }))
@@ -26,6 +27,14 @@
   <label>Preview:</label>
   <div id="Preview">
   </div>
+  if (!Model.IsNewArticle)
+  {
+    <div><label>Attachments:</label></div>
+    <div id="otter-attachments">
+      @{ Html.RenderPartial("Attachments", Model.Attachments, new ViewDataDictionary { { "edit", true } });}
+    </div>
+    <div style="margin: 1em 0"><button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#otter-modal-upload-attachment"><span class="glyphicon glyphicon-paperclip"></span>&nbsp;Add attachment</button></div>
+  }
   @Html.EditorFor(m => m.Security)
   @Html.ValidationMessageFor(m => m.Security)
   <div class="form-group">
@@ -56,6 +65,39 @@
   {
     @Html.ActionLink("Cancel", "Read", new { id = Model.UrlTitle }, new { @class = "btn btn-default" })
   }
+}
+@if (!Model.IsNewArticle)
+{
+  <div id="otter-modal-upload-attachment" class="modal fade">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">Upload new attachment</h4>
+        </div>
+        <div class="modal-body">
+          @using (Html.BeginForm("UploadAttachment", null, FormMethod.Post, new { id = "otter-upload-attachment-form", enctype = "multipart/form-data" }))
+          {
+            @Html.HiddenFor(m => m.ArticleId)
+            <div class="form-group">
+              <label for="UploadFile">Select file to attach:</label>
+              <input type="file" class="form-control" id="UploadFile" name="UploadFile" data-val="true" data-val-required="Please select a file to attach." />
+              @Html.ValidationMessage("UploadFile")
+            </div>
+            <div class="form-group">
+              <label for="UploadTitle">Attachment title:</label>
+              @Html.TextBox("UploadTitle", null, new { @class = "form-control", data_val = "true", data_val_required = "Please enter a title for the attachment." })
+              @Html.ValidationMessage("UploadTitle")
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="$('#otter-upload-attachment-form').submit()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 }
 @section head
 {
@@ -128,22 +170,68 @@
         }
       });
 
-      $("#Text").bind("input propertychange", function (evt) {
-
-        if (window.event && event.type == "propertychange" && event.propertyName != "value") {
-          return;
+      $("#otter-upload-attachment-form").submit(function(e) {
+        e.preventDefault();
+        $form = $(this);
+        var isValid = $form.validate().form();
+        if (isValid)
+        {
+          $("#otter-modal-upload-attachment button").prop("disabled", true);
+          var formData = new FormData(this);
+          $.ajax({
+            url: "@Url.Action("UploadAttachment")",
+            type: "POST",
+            dataType: "html",
+            data: formData,
+            contentType: false,
+            processData: false
+          }).done(function(r) {
+            $("#otter-attachments").html(r);
+            $("#otter-modal-upload-attachment").modal("hide");
+            $("#UploadFile").val("");
+            $("#UploadTitle").val("");
+          }).fail(function() {
+            var validator = $form.validate();
+            validator.showErrors({
+              "UploadFile": "There was a problem uploading the attachment. Verify that the attachment exists and is not more than " + @Html.Raw(HttpUtility.JavaScriptStringEncode(maxAttachmentUploadBytes, true)) + "."
+            });
+          }).always(function() {
+            $("#otter-modal-upload-attachment button").prop("disabled", false);
+          });
         }
-
-        window.clearTimeout($(this).data("timeout"));
-        $('#Preview').addClass('loading');
-        requestId = new Date().getTime();
-
-        $(this).data("timeout", setTimeout(loadPreview, 1000));
       });
 
-      loadPreview();
+    $("#otter-attachments").on("click", ".otter-attachment-delete", function () {
+      var attachmentId = $(this).data("attachmentid");
+      if (attachmentId && confirm("Are you sure you wish to delete this attachment?"))
+      {
+        $.ajax({
+          url: "@Url.Action("DeleteAttachment")",
+          type: "POST",
+          dataType: "html",
+          data: { "id": attachmentId }
+        }).done(function(r) {
+          $("#otter-attachments").html(r);
+        });
+      }
+    });
 
-      $('#edit-form :input').bind("change", dirtyHandler);
+    $("#Text").bind("input propertychange", function (evt) {
+
+      if (window.event && event.type == "propertychange" && event.propertyName != "value") {
+        return;
+      }
+
+      window.clearTimeout($(this).data("timeout"));
+      $('#Preview').addClass('loading');
+      requestId = new Date().getTime();
+
+      $(this).data("timeout", setTimeout(loadPreview, 1000));
+    });
+
+    loadPreview();
+
+    $('#edit-form :input').bind("change", dirtyHandler);
 
     });
   </script>

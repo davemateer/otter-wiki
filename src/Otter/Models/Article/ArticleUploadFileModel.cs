@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="ArticleUploadImageModel.cs" company="Dave Mateer">
+// <copyright file="ArticleUploadFileModel.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -28,15 +28,15 @@ namespace Otter.Models
     using System.ComponentModel.DataAnnotations;
     using System.Web;
 
-    public sealed class ArticleUploadImageModel
+    public sealed class ArticleUploadFileModel
     {
         [Required]
         public int? ArticleId { get; set; }
 
         [Required]
-        public HttpPostedFileBase UploadImageFile { get; set; }
+        public HttpPostedFileBase UploadFile { get; set; }
 
         [Required]
-        public string UploadImageTitle { get; set; }
+        public string UploadTitle { get; set; }
     }
 }

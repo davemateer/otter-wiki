@@ -33,6 +33,9 @@ namespace Otter.Models
     {
         public int ArticleId { get; set; }
 
+        [IgnoreMap]
+        public IEnumerable<ArticleAttachmentRecordModel> Attachments { get; set; }
+
         public string Html { get; set; }
 
         public int Revision { get; set; }

@@ -63,14 +63,14 @@
         {
           @Html.HiddenFor(m => m.ArticleId)
           <div class="form-group">
-            <label for="UploadImageFile">Select image to upload:</label>
-            <input type="file" class="form-control" id="UploadImageFile" name="UploadImageFile" data-val="true" data-val-required="Please select an image to load." />
-            @Html.ValidationMessage("UploadImageFile")
+            <label for="UploadFile">Select image to upload:</label>
+            <input type="file" class="form-control" id="UploadFile" name="UploadFile" data-val="true" data-val-required="Please select an image to load." />
+            @Html.ValidationMessage("UploadFile")
           </div>
           <div class="form-group">
-            <label for="UploadImageTitle">Image title:</label>
-            @Html.TextBox("UploadImageTitle", null, new { @class = "form-control", data_val = "true", data_val_required = "Please enter a title for the image." })
-            @Html.ValidationMessage("UploadImageTitle")
+            <label for="UploadTitle">Image title:</label>
+            @Html.TextBox("UploadTitle", null, new { @class = "form-control", data_val = "true", data_val_required = "Please enter a title for the image." })
+            @Html.ValidationMessage("UploadTitle")
           </div>
         }
       </div>

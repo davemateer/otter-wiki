@@ -32,5 +32,5 @@ var applyContentFormat = function (target) {
 
   // prettyPrint();
 
-  target.find('table').addClass('table table-condensed table-bordered');
+  target.find('table').not(".otter-attachment").addClass('table table-condensed table-bordered');
 };

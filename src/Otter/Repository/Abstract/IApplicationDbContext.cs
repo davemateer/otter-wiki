@@ -30,6 +30,8 @@ namespace Otter.Repository.Abstract
 
     public interface IApplicationDbContext
     {
+        DbSet<ArticleAttachment> ArticleAttachments { get; }
+
         DbSet<ArticleHistory> ArticleHistory { get; }
 
         DbSet<ArticleImage> ArticleImages { get; }

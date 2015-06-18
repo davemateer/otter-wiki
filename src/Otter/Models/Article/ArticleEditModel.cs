@@ -26,12 +26,16 @@
 namespace Otter.Models
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using AutoMapper;
 
     public sealed class ArticleEditModel
     {
         public int ArticleId { get; set; }
+
+        [IgnoreMap]
+        public IEnumerable<ArticleAttachmentRecordModel> Attachments { get; set; }
 
         [IgnoreMap]
         [Display(Name = "Reason for change")]

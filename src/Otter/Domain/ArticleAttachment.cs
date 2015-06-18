@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="HtmlHelperExtensions.cs" company="Dave Mateer">
+// <copyright file="ArticleAttachment.cs" company="Dave Mateer">
 // The MIT License (MIT)
 //
 // Copyright (c) 2015 Dave Mateer
@@ -23,23 +23,16 @@
 // THE SOFTWARE.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace Otter
+namespace Otter.Domain
 {
-    using System.Text;
-    using System.Web.Mvc;
-
-    public static class HtmlHelperExtensions
+    public sealed class ArticleAttachment
     {
-        public static string FileSize(long bytes)
-        {
-            StringBuilder sb = new StringBuilder(11);
-            NativeMethods.StrFormatByteSize(bytes, sb, sb.Capacity);
-            return sb.ToString();
-        }
+        public int ArticleAttachmentId { get; set; }
 
-        public static string FileSize(this HtmlHelper html, long bytes)
-        {
-            return FileSize(bytes);
-        }
+        public int ArticleId { get; set; }
+
+        public string Filename { get; set; }
+
+        public string Title { get; set; }
     }
 }

@@ -26,15 +26,15 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("Otter knowledge base and wiki")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Otter knowledge base and wiki")]
+[assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCopyright("")]
-[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyFileVersion("0.48.0.0")]
+[assembly: AssemblyProduct("Otter knowledge base and wiki")]
+[assembly: AssemblyTitle("Otter knowledge base and wiki")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyVersion("0.48.0.0")]
 [assembly: ComVisible(false)]
 [assembly: Guid("44299fb2-3d47-4330-8971-3be20fdae7bc")]
-[assembly: AssemblyVersion("0.47.0.0")]
-[assembly: AssemblyFileVersion("0.47.0.0")]

@@ -76,4 +76,18 @@ footer {
 .otter-image-title {
   font-weight: bold; }
 
+table.otter-attachment td, table.otter-attachment th {
+  padding: 2px 6px;
+  border: 1px solid #ddd; }
+
+div.otter-attachment {
+  border-top: 1px dashed #34B7B2;
+  border-bottom: 1px dashed #34B7B2;
+  padding: 1em 0;
+  margin: 1em 0; }
+  div.otter-attachment header {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 6px; }
+
 /*# sourceMappingURL=otter.css.map */
