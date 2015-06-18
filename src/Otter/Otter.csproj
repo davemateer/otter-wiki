@@ -232,6 +232,7 @@
     <Content Include="Content\favicon\mstile-310x150.png" />
     <Content Include="Content\favicon\mstile-310x310.png" />
     <Content Include="Content\favicon\mstile-70x70.png" />
+    <Content Include="Content\images\attachment.png" />
     <Content Include="Content\images\logo_white_small.png" />
     <Content Include="Content\jquery-ui.css" />
     <Content Include="Content\otter.css">

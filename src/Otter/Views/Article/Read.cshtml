@@ -18,8 +18,15 @@
     @if (this.Model.Attachments.Any())
     {
       <div class="otter-attachment">
-        <header>@string.Format("{0} attachment{1}:", this.Model.Attachments.Count(), this.Model.Attachments.Count() == 1 ? string.Empty : "s")</header>
-        @{Html.RenderPartial("Attachments", this.Model.Attachments);}
+        <div class="row">
+          <div class="col-md-1 visible-md-block visible-lg-block">
+            <img src="~/Content/images/attachment.png" width="40" height="40" alt="attachments" />
+          </div>
+          <div class="col-md-11">
+            <header>@string.Format("{0} attachment{1}:", this.Model.Attachments.Count(), this.Model.Attachments.Count() == 1 ? string.Empty : "s")</header>
+            @{Html.RenderPartial("Attachments", this.Model.Attachments);}
+          </div>
+        </div>
       </div>
     }
     <p class="text-muted"><small>@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedDtm, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</small></p>
