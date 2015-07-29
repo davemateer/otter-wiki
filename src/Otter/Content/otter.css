@@ -76,9 +76,14 @@ footer {
 .otter-image-title {
   font-weight: bold; }
 
-table.otter-attachment td, table.otter-attachment th {
+table.otter-attachment td, table.otter-attachment th, table.otter-article-information td, table.otter-article-information th {
   padding: 2px 6px;
   border: 1px solid #ddd; }
+
+table.otter-article-information td, table.otter-article-information th {
+  font-size: 0.85em;
+  color: #888;
+  font-style: italic; }
 
 div.otter-attachment {
   border-top: 1px dashed #34B7B2;

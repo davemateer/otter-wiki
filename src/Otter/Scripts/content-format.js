@@ -13,7 +13,6 @@
 };
 
 var applyContentFormat = function (target) {
-
   // target.find('code').addClass("prettyprint");
 
   target.find('pre > code').each(function (index) {
@@ -32,5 +31,5 @@ var applyContentFormat = function (target) {
 
   // prettyPrint();
 
-  target.find('table').not(".otter-attachment").addClass('table table-condensed table-bordered');
+  target.find('table').not(".otter-attachment").not(".otter-article-information").addClass('table table-condensed table-bordered');
 };

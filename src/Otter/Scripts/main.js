@@ -1,5 +1,4 @@
 ﻿$(document).ready(function () {
-
   $('input[type=radio][data-otter-permission=true]').on('change', function () {
     var specified = $(this).val() === "Specified";
     $(this).closest('.form-group').find('input[type=text][data-otter-permission-content=users]').prop('disabled', !specified);

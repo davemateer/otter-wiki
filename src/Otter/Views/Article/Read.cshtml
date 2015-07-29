@@ -29,7 +29,25 @@
         </div>
       </div>
     }
-    <p class="text-muted"><small>@string.Format("Revision {0:N0}; last updated {1:g}{2}", Model.Revision, Model.UpdatedWhen, string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : " by " + Model.UpdatedByDisplayName ?? Model.UpdatedBy)</small></p>
+    <table class="otter-article-information">
+      <tbody>
+        <tr>
+          <td>Revision</td>
+          <td>@Model.Revision</td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>Last updated</td>
+          <td>@Model.UpdatedWhen</td>
+          <td>@(Model.UpdatedByDisplayName ?? Model.UpdatedBy)</td>
+        </tr>
+        <tr>
+          <td>Created</td>
+          <td>@Model.CreatedWhen</td>
+          <td>@(Model.CreatedByDisplayName ?? Model.CreatedBy)</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   <div class="hidden-print col-lg-2 col-md-2 col-sm-3 hidden-xs">
     <div class="list-group otter-manage-article" data-spy="affix" data-offset-top="100">

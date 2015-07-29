@@ -36,6 +36,13 @@ namespace Otter.Models
         [IgnoreMap]
         public IEnumerable<ArticleAttachmentRecordModel> Attachments { get; set; }
 
+        public string CreatedBy { get; set; }
+
+        [IgnoreMap]
+        public string CreatedByDisplayName { get; set; }
+
+        public DateTime CreatedWhen { get; set; }
+
         public string Html { get; set; }
 
         public int Revision { get; set; }

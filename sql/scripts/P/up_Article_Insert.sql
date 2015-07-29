@@ -16,8 +16,10 @@ INSERT INTO dbo.Article (
    ,[Text]
    ,[Html]
    ,[Revision]
-   ,[UpdatedWhen]
+   ,[CreatedBy]
+   ,[CreatedWhen]
    ,[UpdatedBy]
+   ,[UpdatedWhen]
    ,[Comment]
 ) VALUES (
 	@Title
@@ -25,8 +27,10 @@ INSERT INTO dbo.Article (
 	,@Text
 	,@Html
 	,1  -- Revision
+	,@UpdatedBy
 	,GETDATE()
 	,@UpdatedBy
+	,GETDATE()
 	,'Initial version'
 )
 

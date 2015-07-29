@@ -25,8 +25,14 @@
 //-----------------------------------------------------------------------
 namespace Otter.Domain
 {
+    using System;
+
     public sealed class Article : ArticleBase
     {
+        public string CreatedBy { get; set; }
+
+        public DateTime CreatedWhen { get; set; }
+
         public string Html { get; set; }
 
         public string UrlTitle { get; set; }

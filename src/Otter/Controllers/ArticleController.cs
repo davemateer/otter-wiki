@@ -370,7 +370,7 @@ namespace Otter.Controllers
         [HttpGet]
         public ActionResult Read(string id, int? revision)
         {
-            var article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
+            Article article = this.articleRepository.Articles.FirstOrDefault(a => a.UrlTitle == id);
             if (article == null)
             {
                 return this.HttpNotFound();
@@ -401,7 +401,19 @@ namespace Otter.Controllers
             }
 
             model.Html = ResolveApplicationPaths(model.Html);
+
+            // Resolve user ids to names.
             this.SetUpdatedDisplayName(model);
+
+            if (!string.IsNullOrEmpty(model.CreatedBy))
+            {
+                var entity = this.securityRepository.Find(model.CreatedBy, SecurityEntityTypes.User);
+                if (entity != null)
+                {
+                    model.CreatedByDisplayName = entity.Name;
+                }
+            }
+
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
             model.Attachments = this.BuildArticleAttachmentRecordModels(article);
             return this.View(model);
