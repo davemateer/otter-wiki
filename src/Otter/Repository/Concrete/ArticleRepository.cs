@@ -470,10 +470,24 @@ namespace Otter.Repository
             }
         }
 
+        public void MarkArticleViewed(int articleId, string userId)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["Otter"].ConnectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "dbo.up_Article_View";
+                cmd.Parameters.AddWithValue("@ArticleId", articleId);
+                cmd.Parameters.AddWithValue("@ViewedBy", userId);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         public void ReviewArticle(int articleId, string userId)
         {
             Article article = this.context.Articles.SingleOrDefault(a => a.ArticleId == articleId);
-            if (articleId == null)
+            if (article == null)
             {
                 throw new ArgumentException("Invalid article id", "articleId");
             }

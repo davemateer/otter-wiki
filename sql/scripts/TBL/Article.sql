@@ -18,8 +18,8 @@ CREATE TABLE [dbo].[Article](
 	[Html] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[LastReviewedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[LastReviewedWhen] [datetime] NOT NULL,
-	[LastViewedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-	[LastViewedWhen] [datetime] NULL,
+	[LastViewedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[LastViewedWhen] [datetime] NOT NULL,
  CONSTRAINT [PK_Article] PRIMARY KEY NONCLUSTERED 
 (
 	[ArticleId] ASC

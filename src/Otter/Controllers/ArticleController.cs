@@ -398,6 +398,7 @@ namespace Otter.Controllers
             else
             {
                 model = Mapper.Map<ArticleReadModel>(article);
+                this.articleRepository.MarkArticleViewed(article.ArticleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
             }
 
             model.Html = ResolveApplicationPaths(model.Html);
@@ -426,6 +427,7 @@ namespace Otter.Controllers
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
             model.Attachments = this.BuildArticleAttachmentRecordModels(article);
             model.CanEdit = this.articleRepository.CanModify(this.User, article.ArticleId);
+
             return this.View(model);
         }
 

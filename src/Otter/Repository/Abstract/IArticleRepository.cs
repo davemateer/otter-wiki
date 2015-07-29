@@ -68,6 +68,8 @@ namespace Otter.Repository
 
         void InsertArticleImage(int articleId, string filename, string title);
 
+        void MarkArticleViewed(int articleId, string userId);
+
         void ReviewArticle(int articleId, string userId);
 
         IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
