@@ -501,7 +501,7 @@ namespace Otter.Repository
                     int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
                     int titleOrdinal = reader.GetOrdinal("Title");
                     int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
-                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+                    int updatedWhenOrdinal = reader.GetOrdinal("UpdatedWhen");
 
                     while (reader.Read())
                     {
@@ -509,7 +509,7 @@ namespace Otter.Repository
                         {
                             Title = reader.GetString(titleOrdinal),
                             UpdatedBy = reader.GetString(updatedByOrdinal),
-                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UpdatedWhen = reader.GetDateTime(updatedWhenOrdinal),
                             UrlTitle = reader.GetString(urlTitleOrdinal)
                         });
                     }
@@ -564,7 +564,7 @@ namespace Otter.Repository
                     int urlTitleOrdinal = reader.GetOrdinal("UrlTitle");
                     int titleOrdinal = reader.GetOrdinal("Title");
                     int updatedByOrdinal = reader.GetOrdinal("UpdatedBy");
-                    int updatedDtmOrdinal = reader.GetOrdinal("UpdatedDtm");
+                    int updatedWhenOrdinal = reader.GetOrdinal("UpdatedWhen");
 
                     while (reader.Read())
                     {
@@ -572,7 +572,7 @@ namespace Otter.Repository
                         {
                             Title = reader.GetString(titleOrdinal),
                             UpdatedBy = reader.GetString(updatedByOrdinal),
-                            UpdatedDtm = reader.GetDateTime(updatedDtmOrdinal),
+                            UpdatedWhen = reader.GetDateTime(updatedWhenOrdinal),
                             UrlTitle = reader.GetString(urlTitleOrdinal)
                         });
                     }

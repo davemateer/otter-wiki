@@ -27,7 +27,7 @@ BEGIN TRANSACTION
 	INSERT INTO [dbo].[ArticleHistory] (
 		[ArticleId]
 		,[Revision]
-		,[UpdatedDtm]
+		,[UpdatedWhen]
 		,[UpdatedBy]
 		,[Comment]
 		,[Title]
@@ -37,7 +37,7 @@ BEGIN TRANSACTION
 	SELECT
 		a.ArticleId
 		,a.Revision
-		,a.UpdatedDtm
+		,a.UpdatedWhen
 		,a.UpdatedBy
 		,a.Comment
 		,a.Title
@@ -62,7 +62,7 @@ BEGIN TRANSACTION
 		,[Text] = @Text
 		,[Html] = @Html
 		,[Revision] = @Revision
-		,[UpdatedDtm] = GETDATE()
+		,[UpdatedWhen] = GETDATE()
 		,[UpdatedBy] = @UpdatedBy
 		,[Comment] = @Comment
 	WHERE ArticleId = @ArticleId

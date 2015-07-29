@@ -312,7 +312,7 @@ namespace Otter.Controllers
                                     {
                                         Revision = h.Revision,
                                         UpdatedBy = h.UpdatedBy,
-                                        UpdatedDtm = h.UpdatedDtm,
+                                        UpdatedWhen = h.UpdatedWhen,
                                         Comment = h.Comment
                                     }).ToList();
 

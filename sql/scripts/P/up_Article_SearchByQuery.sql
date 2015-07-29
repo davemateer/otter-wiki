@@ -19,7 +19,7 @@ SELECT
 	a.UrlTitle
 	,a.Title
 	,a.UpdatedBy
-	,a.UpdatedDtm
+	,a.UpdatedWhen
 FROM
 	(
 		SELECT [Key], [RANK] * @TextWeight AS [Rank]
@@ -40,7 +40,7 @@ GROUP BY
 	a.UrlTitle
 	,a.Title
 	,a.UpdatedBy
-	,a.UpdatedDtm
+	,a.UpdatedWhen
 ORDER BY 
 	SUM(tResults.Rank) DESC
 

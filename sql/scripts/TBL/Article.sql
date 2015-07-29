@@ -9,11 +9,17 @@ CREATE TABLE [dbo].[Article](
 	[Revision] [int] NOT NULL,
 	[Title] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[UrlTitle] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-	[UpdatedDtm] [datetime] NOT NULL,
+	[CreatedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[CreatedWhen] [datetime] NULL,
 	[UpdatedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[UpdatedWhen] [datetime] NOT NULL,
 	[Comment] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[Text] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[Html] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[LastReviewedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[LastReviewedWhen] [datetime] NULL,
+	[LastViewedBy] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[LastViewedWhen] [datetime] NULL,
  CONSTRAINT [PK_Article] PRIMARY KEY NONCLUSTERED 
 (
 	[ArticleId] ASC
@@ -30,9 +36,3 @@ CREATE UNIQUE CLUSTERED INDEX [IX_Article_UrlTitle] ON [dbo].[Article]
 (
 	[UrlTitle] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-GO
-
-CREATE FULLTEXT INDEX ON [dbo].[Article]
-KEY INDEX [IX_Article_UrlTitle]ON ([ArticleFullTextCatalog], FILEGROUP [PRIMARY])
-WITH (CHANGE_TRACKING = AUTO, STOPLIST = SYSTEM)
-

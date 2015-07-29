@@ -41,6 +41,6 @@ namespace Otter.Domain
 
         public string UpdatedBy { get; set; }
 
-        public DateTime UpdatedDtm { get; set; }
+        public DateTime UpdatedWhen { get; set; }
     }
 }

@@ -16,7 +16,7 @@ INSERT INTO dbo.Article (
    ,[Text]
    ,[Html]
    ,[Revision]
-   ,[UpdatedDtm]
+   ,[UpdatedWhen]
    ,[UpdatedBy]
    ,[Comment]
 ) VALUES (

@@ -1,5 +1,5 @@
 -- P  up_Article_SearchByTag
-CREATE PROCEDURE dbo.up_Article_SearchByTag (
+CREATE PROCEDURE [dbo].[up_Article_SearchByTag] (
 	@Tag nvarchar(30)
 	,@UserId nvarchar(256)
 	,@UserGroups SecurityEntityTable READONLY
@@ -11,7 +11,7 @@ SELECT
 	a.UrlTitle
 	,a.Title
 	,a.UpdatedBy
-	,a.UpdatedDtm
+	,a.UpdatedWhen
 FROM
 	dbo.Article a
 	INNER JOIN dbo.ArticleSecurity s ON s.ArticleId = a.ArticleId

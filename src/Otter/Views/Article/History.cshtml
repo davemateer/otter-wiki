@@ -24,7 +24,7 @@
           <tr>
             <td>@Model.Revision (current)</td>
             <td>@(string.IsNullOrEmpty(Model.UpdatedBy) ? string.Empty : Model.UpdatedByDisplayName ?? Model.UpdatedBy)</td>
-            <td>@Model.UpdatedDtm.ToString("g", System.Globalization.CultureInfo.CurrentUICulture)</td>
+            <td>@Model.UpdatedWhen.ToString("g", System.Globalization.CultureInfo.CurrentUICulture)</td>
             <td>@Model.Comment</td>
             <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle })</td>
             <td>&nbsp;</td>
@@ -38,7 +38,7 @@
             <tr>
               <td>@record.Revision</td>
               <td>@(string.IsNullOrEmpty(record.UpdatedBy) ? string.Empty : record.UpdatedByDisplayName ?? record.UpdatedBy)</td>
-              <td>@record.UpdatedDtm.ToString("g", System.Globalization.CultureInfo.CurrentUICulture)</td>
+              <td>@record.UpdatedWhen.ToString("g", System.Globalization.CultureInfo.CurrentUICulture)</td>
               <td>@record.Comment</td>
               <td>@Html.ActionLink("View", "Read", new { id = Model.UrlTitle, revision = record.Revision })</td>
               <td>

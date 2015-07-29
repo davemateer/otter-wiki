@@ -12,7 +12,7 @@
     <div class="panel panel-default">
       <div class="panel-heading">@Html.ActionLink(string.Format("Version {0}", @Model.CompareFrom.Revision), "Read", new { id = Model.UrlTitle, revision = Model.CompareFrom.Revision })</div>
       <div class="panel-body">
-        <div>Updated: @Model.CompareFrom.UpdatedDtm.ToString("g")</div>
+        <div>Updated: @Model.CompareFrom.UpdatedWhen.ToString("g")</div>
         <div>Updated by: @(string.IsNullOrEmpty(Model.CompareFrom.UpdatedBy) ? string.Empty : Model.CompareFrom.UpdatedByDisplayName ?? Model.CompareFrom.UpdatedBy)</div>
         @if (!string.Equals(Model.Title, Model.CompareFrom.Title, StringComparison.CurrentCulture))
         {
@@ -31,7 +31,7 @@
         @Html.ActionLink(string.Format("Version {0}", @Model.CompareTo.Revision), "Read", new { id = Model.UrlTitle, revision = Model.CompareTo.Revision })
       </div>
       <div class="panel-body">
-        <div>Updated: @Model.CompareTo.UpdatedDtm.ToString("g")</div>
+        <div>Updated: @Model.CompareTo.UpdatedWhen.ToString("g")</div>
         <div>Updated by: @(string.IsNullOrEmpty(Model.CompareTo.UpdatedBy) ? string.Empty : Model.CompareTo.UpdatedByDisplayName ?? Model.CompareTo.UpdatedBy)</div>
         @if (!string.Equals(Model.Title, Model.CompareTo.Title, StringComparison.CurrentCulture))
         {

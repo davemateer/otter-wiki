@@ -21,7 +21,7 @@
     {
       <li>
         <div>@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</div>
-        <div class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedDtm, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</div>
+        <div class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedWhen, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</div>
       </li>
     }
   </ul>

@@ -50,7 +50,7 @@ namespace Otter.Models
         [IgnoreMap]
         public string UpdatedByDisplayName { get; set; }
 
-        public DateTime UpdatedDtm { get; set; }
+        public DateTime UpdatedWhen { get; set; }
 
         public string UrlTitle { get; set; }
     }
