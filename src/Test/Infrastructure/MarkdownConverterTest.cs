@@ -7,6 +7,24 @@
     public class MarkdownConverterTest
     {
         [TestMethod]
+        public void Convert_Image()
+        {
+            var converter = new MarkdownConverter();
+            var actual = converter.Convert("![sample](_img/sample.png \"Sample\")", "fooArticle");
+            string expected = "<p><img src=\"%ARTICLE_IMAGES%/fooArticle/sample.png\" alt=\"sample\" title=\"Sample\"></p>";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void Convert_ImageAndTable()
+        {
+            var converter = new MarkdownConverter();
+            var actual = converter.Convert("![sample](_img/sample.png \"Sample\")\n\n{|\n|Orange\n|Apple\n|-\n|Bread\n|Pie\n|-\n|Butter\n|Ice Cream \n|}", "fooArticle");
+            string expected = "<p><img src=\"%ARTICLE_IMAGES%/fooArticle/sample.png\" alt=\"sample\" title=\"Sample\"></p>\r\n<table><tbody><tr><td><p>Orange</p></td><td><p>Apple</p></td></tr><tr><td><p>Bread</p></td><td><p>Pie</p></td></tr><tr><td><p>Butter</p></td><td><p>Ice Cream</p></td></tr></tbody></table>";
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void Convert_MixedTable()
         {
             var converter = new MarkdownConverter();

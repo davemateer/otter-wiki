@@ -46,7 +46,7 @@ namespace Otter
             // Replace article path
             if (!string.IsNullOrEmpty(articleUrlTitle))
             {
-                html = Regex.Replace(plainText, @"(!\[[^\]]*]\()_img/(\S+)", string.Format("$1%ARTICLE_IMAGES%/{0}/$2", articleUrlTitle));
+                html = Regex.Replace(html, @"(!\[[^\]]*]\()_img/(\S+)", string.Format("$1%ARTICLE_IMAGES%/{0}/$2", articleUrlTitle));
             }
 
             html = CommonMarkConverter.Convert(html);
