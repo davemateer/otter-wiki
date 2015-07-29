@@ -35,6 +35,10 @@ namespace Otter.Domain
 
         public string Html { get; set; }
 
+        public string LastReviewedBy { get; set; }
+
+        public DateTime LastReviewedWhen { get; set; }
+
         public string UrlTitle { get; set; }
     }
 }

@@ -32,19 +32,24 @@
     <table class="otter-article-information">
       <tbody>
         <tr>
-          <td>Revision</td>
-          <td>@Model.Revision</td>
-          <td></td>
+          <td>Created</td>
+          <td>@(Model.CreatedByDisplayName ?? Model.CreatedBy)</td>
+          <td class="text-right">@Model.CreatedWhen.ToString("d")</td>
         </tr>
         <tr>
           <td>Last updated</td>
-          <td>@Model.UpdatedWhen</td>
           <td>@(Model.UpdatedByDisplayName ?? Model.UpdatedBy)</td>
+          <td class="text-right">@Model.UpdatedWhen.ToString("d")</td>
         </tr>
         <tr>
-          <td>Created</td>
-          <td>@Model.CreatedWhen</td>
-          <td>@(Model.CreatedByDisplayName ?? Model.CreatedBy)</td>
+          <td>Last reviewed</td>
+          <td>@(Model.LastReviewedDisplayName ?? Model.LastReviewedBy)</td>
+          <td class="text-right">@Model.LastReviewedWhen.ToString("d")</td>
+        </tr>
+        <tr>
+          <td>Revision</td>
+          <td class="text-right">@Model.Revision</td>
+          <td></td>
         </tr>
       </tbody>
     </table>
@@ -52,22 +57,44 @@
   <div class="hidden-print col-lg-2 col-md-2 col-sm-3 hidden-xs">
     <div class="list-group otter-manage-article" data-spy="affix" data-offset-top="100">
       <div class="list-group-item bg-primary otter-bg-primary">Manage article</div>
-      <a class="list-group-item" href="@Url.Action("Edit", new { id = Model.UrlTitle })"><span class="glyphicon glyphicon-edit"></span>&nbsp;Edit</a>
+      @if (this.Model.CanEdit)
+      {
+        <a class="list-group-item" href="@Url.Action("Edit", new { id = Model.UrlTitle })"><span class="glyphicon glyphicon-edit"></span>&nbsp;Edit</a>
+        <a class="list-group-item otter-review" data-otter-review="true"><span class="glyphicon glyphicon-check"></span>&nbsp;Mark as reviewed</a>
+      }
       <a class="list-group-item" href="@Url.Action("History", new { id = Model.UrlTitle })"><span class="glyphicon glyphicon-time"></span>&nbsp;View history</a>
     </div>
   </div>
 </div>
+<form action="@Url.Action("Review")" method="post" id="reviewForm">
+  <input type="hidden" name="ArticleId" value="@this.Model.ArticleId" />
+</form>
+@section head
+{
+  <style type="text/css">
+    .otter-review {
+      cursor: pointer;
+    }
+  </style>
+}
 @section scripts
 {
   <script type="text/javascript" src="@Url.Content("~/Scripts/content-format.js")"></script>
   <script type="text/javascript">
     $(document).ready(function () {
       applyContentFormat($("#article-content"));
+      $("a[data-otter-review='true']").click(function () {
+        $("#reviewForm").submit();
+      });
     });
   </script>
 }
 @section collapsed_navlinks
 {
-  <li class="hidden-sm hidden-md hidden-lg">@Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle })</li>
+  @if (this.Model.CanEdit)
+  {
+    <li class="hidden-sm hidden-md hidden-lg">@Html.ActionLink("Edit article", "Edit", new { id = Model.UrlTitle })</li>
+    <li class="hidden-sm hidden-md hidden-lg"><a class="otter-review" data-otter-review="true">Mark as reviewed</a></li>
+  }
   <li class="hidden-sm hidden-md hidden-lg">@Html.ActionLink("View article history", "History", new { id = Model.UrlTitle })</li>
 }

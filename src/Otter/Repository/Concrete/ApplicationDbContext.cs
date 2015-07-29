@@ -28,9 +28,8 @@ namespace Otter.Repository.Concrete
     using System.Data.Entity;
     using System.Data.Entity.ModelConfiguration.Conventions;
     using Otter.Domain;
-    using Otter.Repository.Abstract;
 
-    public sealed class ApplicationDbContext : DbContext, IApplicationDbContext
+    public sealed class ApplicationDbContext : DbContext
     {
         public ApplicationDbContext()
             : base("Otter")

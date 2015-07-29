@@ -30,6 +30,7 @@ namespace Otter.Repository
     using System.Collections.Generic;
     using System.Configuration;
     using System.Data;
+    using System.Data.Entity;
     using System.Data.SqlClient;
     using System.Diagnostics;
     using System.Linq;
@@ -38,18 +39,18 @@ namespace Otter.Repository
     using DiffMatchPatch;
     using Otter.Domain;
     using Otter.Models;
-    using Otter.Repository.Abstract;
+    using Otter.Repository.Concrete;
 
     public sealed class ArticleRepository : IArticleRepository
     {
         private static readonly ConcurrentDictionary<int, IEnumerable<ArticleSecurity>> ArticleSecurityCache = new ConcurrentDictionary<int, IEnumerable<ArticleSecurity>>();
         private static readonly string SecurityDomain = ConfigurationManager.AppSettings["otter:SecurityDomain"];
 
-        private readonly IApplicationDbContext context;
+        private readonly ApplicationDbContext context;
         private readonly ITextToHtmlConverter converter;
         private readonly ISecurityRepository securityRepository;
 
-        public ArticleRepository(IApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
+        public ArticleRepository(ApplicationDbContext context, ITextToHtmlConverter converter, ISecurityRepository securityRepository)
         {
             this.context = context;
             this.converter = converter;
@@ -467,6 +468,20 @@ namespace Otter.Repository
                 conn.Open();
                 cmd.ExecuteNonQuery();
             }
+        }
+
+        public void ReviewArticle(int articleId, string userId)
+        {
+            Article article = this.context.Articles.SingleOrDefault(a => a.ArticleId == articleId);
+            if (articleId == null)
+            {
+                throw new ArgumentException("Invalid article id", "articleId");
+            }
+
+            article.LastReviewedBy = userId;
+            article.LastReviewedWhen = DateTime.Now;
+            this.context.Entry(article).State = EntityState.Modified;
+            this.context.SaveChanges();
         }
 
         public IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity)

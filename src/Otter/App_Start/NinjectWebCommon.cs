@@ -34,7 +34,6 @@ namespace Otter
     using Ninject;
     using Ninject.Web.Common;
     using Otter.Repository;
-    using Otter.Repository.Abstract;
     using Otter.Repository.Concrete;
 
     public static class NinjectWebCommon
@@ -73,7 +72,7 @@ namespace Otter
 
         private static void RegisterServices(IKernel kernel)
         {
-            kernel.Bind<IApplicationDbContext>().To<ApplicationDbContext>().InRequestScope();
+            kernel.Bind<ApplicationDbContext>().ToSelf().InRequestScope();
             kernel.Bind<IArticleRepository>().To<ArticleRepository>().InRequestScope();
             kernel.Bind<ISecurityRepository>().To<SecurityRepository>().InRequestScope();
             kernel.Bind<ITextToHtmlConverter>().To<MarkdownConverter>().InRequestScope();

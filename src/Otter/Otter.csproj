@@ -194,7 +194,6 @@
     <Compile Include="Models\PermissionModel.cs" />
     <Compile Include="Models\PermissionOption.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Repository\Abstract\IApplicationDbContext.cs" />
     <Compile Include="Repository\Abstract\IArticleRepository.cs" />
     <Compile Include="Repository\Abstract\ISecurityRepository.cs" />
     <Compile Include="Repository\Concrete\ApplicationDbContext.cs" />

@@ -42,6 +42,8 @@ namespace Otter
                 .ForMember(m => m.CreatedBy, opt => opt.Ignore())
                 .ForMember(m => m.CreatedWhen, opt => opt.Ignore())
                 .ForMember(m => m.Html, opt => opt.Ignore())
+                .ForMember(m => m.LastReviewedBy, opt => opt.Ignore())
+                .ForMember(m => m.LastReviewedWhen, opt => opt.Ignore())
                 .ForMember(m => m.UrlTitle, opt => opt.Ignore());
 
             Mapper.CreateMap<ArticleBase, ArticleCompareRecord>();

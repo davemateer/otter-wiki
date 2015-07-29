@@ -414,9 +414,37 @@ namespace Otter.Controllers
                 }
             }
 
+            if (!string.IsNullOrEmpty(model.LastReviewedBy))
+            {
+                var entity = this.securityRepository.Find(model.LastReviewedBy, SecurityEntityTypes.User);
+                if (entity != null)
+                {
+                    model.LastReviewedDisplayName = entity.Name;
+                }
+            }
+
             model.Tags = this.articleRepository.ArticleTags.Where(t => t.ArticleId == article.ArticleId).OrderBy(t => t.Tag).Select(t => t.Tag);
             model.Attachments = this.BuildArticleAttachmentRecordModels(article);
+            model.CanEdit = this.articleRepository.CanModify(this.User, article.ArticleId);
             return this.View(model);
+        }
+
+        [HttpPost]
+        public ActionResult Review(int articleId)
+        {
+            Article article = this.articleRepository.Articles.SingleOrDefault(a => a.ArticleId == articleId);
+            if (article == null)
+            {
+                return this.HttpNotFound();
+            }
+
+            if (!this.articleRepository.CanModify(this.User, articleId))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            this.articleRepository.ReviewArticle(articleId, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            return this.RedirectToAction("Read", new { id = article.UrlTitle });
         }
 
         [HttpGet]
