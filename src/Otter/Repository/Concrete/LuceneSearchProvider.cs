@@ -136,7 +136,7 @@ namespace Otter.Repository
             {
                 MultiFieldQueryParser parser = new MultiFieldQueryParser(LuceneVersion, new[] { IndexFieldText, IndexFieldTitle, IndexFieldTagText }, analyzer);
                 Query luceneQuery = parser.Parse(query);
-                List<ArticleSearchResult> results = this.Search(searcher, luceneQuery, identity, MaxSearchResultCount);
+                List<ArticleSearchResult> results = this.Search(searcher, luceneQuery, identity, MaxSearchResultCount, true);
                 return results;
             }
         }
@@ -147,7 +147,7 @@ namespace Otter.Repository
             using (IndexSearcher searcher = new IndexSearcher(directory, true))
             {
                 TermQuery luceneQuery = string.IsNullOrEmpty(tag) ? new TermQuery(new Term(IndexFieldTagNone, IndexFieldTagNoneValue)) : new TermQuery(new Term(IndexFieldTagTerm, tag));
-                List<ArticleSearchResult> results = this.Search(searcher, luceneQuery, identity, int.MaxValue);
+                List<ArticleSearchResult> results = this.Search(searcher, luceneQuery, identity, int.MaxValue, false);
                 return results;
             }
         }
@@ -180,7 +180,7 @@ namespace Otter.Repository
             });
         }
 
-        private List<ArticleSearchResult> Search(IndexSearcher searcher, Query query, IIdentity identity, int maxResultCount)
+        private List<ArticleSearchResult> Search(IndexSearcher searcher, Query query, IIdentity identity, int maxResultCount, bool highlightHits)
         {
             // Create filter to restrict results by security settings. For a document to be visible,
             // either (1) Everyone has access to the document, or (2) the user is included in the
@@ -211,18 +211,21 @@ namespace Otter.Repository
             foreach (ScoreDoc item in hits.ScoreDocs)
             {
                 Document doc = searcher.Doc(item.Doc);
-                string text = doc.Get(IndexFieldText);
-                TokenStream stream = highlightAnalyzer.TokenStream(string.Empty, new StringReader(text));
-                string sample = highlighter.GetBestFragments(stream, text, HighlightFragmentCount, HighlightFragmentSeparator);
 
                 ArticleSearchResult result = new ArticleSearchResult
                 {
-                    FragmentHtml = sample,
                     Title = doc.Get(IndexFieldTitle),
                     UpdatedBy = doc.Get(IndexFieldUpdatedBy),
                     UpdatedWhen = DateTools.StringToDate(doc.Get(IndexFieldUpdatedWhen)),
                     UrlTitle = doc.Get(IndexFieldUrlTitle)
                 };
+
+                if (highlightHits)
+                {
+                    string text = doc.Get(IndexFieldText);
+                    TokenStream stream = highlightAnalyzer.TokenStream(string.Empty, new StringReader(text));
+                    result.FragmentHtml = highlighter.GetBestFragments(stream, text, HighlightFragmentCount, HighlightFragmentSeparator);
+                }
 
                 results.Add(result);
             }
