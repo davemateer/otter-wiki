@@ -53,13 +53,15 @@ namespace Otter.Controllers
         private static readonly int MaxImageUploadBytes = int.Parse(ConfigurationManager.AppSettings["otter:MaxImageUploadBytes"]);
         private readonly IArticleRepository articleRepository;
         private readonly ITextToHtmlConverter htmlConverter;
+        private readonly ISearchProvider searchProvider;
         private readonly ISecurityRepository securityRepository;
 
-        public ArticleController(IArticleRepository articleRepository, ITextToHtmlConverter htmlConverter, ISecurityRepository securityRepository)
+        public ArticleController(IArticleRepository articleRepository, ITextToHtmlConverter htmlConverter, ISecurityRepository securityRepository, ISearchProvider searchProvider)
         {
             this.articleRepository = articleRepository;
             this.htmlConverter = htmlConverter;
             this.securityRepository = securityRepository;
+            this.searchProvider = searchProvider;
         }
 
         [HttpGet]
@@ -147,6 +149,7 @@ namespace Otter.Controllers
             }
 
             string title = this.articleRepository.InsertArticle(model.Title, model.Text, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            this.searchProvider.UpdateIndex(title);
             return this.RedirectToAction("Read", new { id = title });
         }
 
@@ -277,6 +280,7 @@ namespace Otter.Controllers
             // TODO: if title has changed, check if title slug has potentially changed, and alert
             //       the user.
             this.articleRepository.UpdateArticle(model.ArticleId, model.Title, model.UrlTitle, model.Text, model.Comment, tags, security, this.securityRepository.StandardizeUserId(this.User.Identity.Name));
+            this.searchProvider.UpdateIndex(model.UrlTitle);
             return this.RedirectToAction("Read", new { id = model.UrlTitle });
         }
 
@@ -464,18 +468,17 @@ namespace Otter.Controllers
             }
             else
             {
-                model.Articles = this.articleRepository.SearchByQuery(query, this.User.Identity);
+                model.Articles = this.searchProvider.SearchByQuery(query, this.User.Identity);
                 model.Tags = this.articleRepository.ArticleTags.Where(t => t.Tag.Contains(query)).Select(t => t.Tag).Distinct();
             }
 
-            // TODO: remove items where the user does not have read permissions.
             return this.View(model);
         }
 
         [HttpGet]
         public ActionResult Tagged(string id)
         {
-            var results = this.articleRepository.SearchByTag(id, this.User.Identity).OrderBy(a => a.Title);
+            var results = this.searchProvider.SearchByTag(id, this.User.Identity).OrderBy(a => a.Title);
 
             var model = new ArticleSearchModel()
             {
@@ -491,7 +494,7 @@ namespace Otter.Controllers
         [HttpGet]
         public ActionResult Untagged()
         {
-            var results = this.articleRepository.SearchByTag(null, this.User.Identity).OrderBy(a => a.Title);
+            var results = this.searchProvider.SearchByTag(null, this.User.Identity).OrderBy(a => a.Title);
 
             var model = new ArticleSearchModel()
             {

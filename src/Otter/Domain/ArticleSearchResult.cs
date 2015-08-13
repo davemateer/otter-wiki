@@ -30,6 +30,9 @@ namespace Otter.Domain
 
     public sealed class ArticleSearchResult
     {
+        [IgnoreMap]
+        public string FragmentHtml { get; set; }
+
         public string Title { get; set; }
 
         public string UpdatedBy { get; set; }

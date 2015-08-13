@@ -5,8 +5,8 @@
 <h1>@ViewBag.Title</h1>
 @if (Model.Tags.Any())
 {
-  <h2><small>Tags:</small></h2>
-  <div class="tags">
+  <p class="search-summary">@string.Format("{0} tag{1}", Model.Tags.Count(), Model.Tags.Count() == 1 ? string.Empty : "s")</p>
+  <div class="tags" style="margin: 0 0 2em 0">
     @foreach (var tag in Model.Tags)
     {
       <span class="label label-default">@Html.ActionLink(tag, "Tagged", new { id = tag })</span>
@@ -15,13 +15,17 @@
 }
 @if (Model.Articles.Any())
 {
-  <h2><small>@Model.Articles.Count() article(s) returned:</small></h2>
+  <p class="search-summary">@string.Format("{0} article{1}", Model.Articles.Count(), Model.Articles.Count() == 1 ? string.Empty : "s")</p>
   <ul class="list-unstyled">
     @foreach (var article in Model.Articles)
     {
       <li>
-        <div>@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</div>
-        <div class="search-result-details">@string.Format("Last updated {0:g}{1}", article.UpdatedWhen, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</div>
+        <p class="search-result-title">@Html.ActionLink(article.Title, "Read", new { id = article.UrlTitle }, new { @class = "" })</p>
+        @if (!string.IsNullOrEmpty(article.FragmentHtml))
+        {
+          <p class="search-result-fragment">@Html.Raw(article.FragmentHtml)</p>
+        }
+        <p class="search-result-details">@string.Format("Last updated {0:d}{1}", article.UpdatedWhen, string.IsNullOrEmpty(article.UpdatedBy) ? string.Empty : " by " + article.UpdatedByDisplayName ?? article.UpdatedBy)</p>
       </li>
     }
   </ul>

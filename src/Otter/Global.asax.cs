@@ -29,6 +29,7 @@ namespace Otter
     using System.Web.Mvc;
     using System.Web.Optimization;
     using System.Web.Routing;
+    using Otter.Repository;
 
     public class MvcApplication : HttpApplication
     {
@@ -39,6 +40,7 @@ namespace Otter
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
             AutomapperConfiguration.Configure();
+            DependencyResolver.Current.GetService<ISearchProvider>().RebuildIndex();
         }
     }
 }

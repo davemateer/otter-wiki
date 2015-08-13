@@ -58,6 +58,8 @@ namespace Otter.Repository
 
         string GetRevisionText(int articleId, int revision);
 
+        IEnumerable<ArticleSecurity> GetSecurityRecords(int articleId);
+
         IEnumerable<Tuple<string, int>> GetTagSummary(IIdentity identity);
 
         void HydratePermissionModel(PermissionModel model, int articleId, string userId);
@@ -71,10 +73,6 @@ namespace Otter.Repository
         void MarkArticleViewed(int articleId, string userId);
 
         void ReviewArticle(int articleId, string userId);
-
-        IEnumerable<ArticleSearchResult> SearchByQuery(string query, IIdentity identity);
-
-        IEnumerable<ArticleSearchResult> SearchByTag(string tag, IIdentity identity);
 
         void UpdateArticle(int articleId, string title, string urlTitle, string text, string comment, IEnumerable<string> tags, IEnumerable<ArticleSecurity> security, string userId);
     }

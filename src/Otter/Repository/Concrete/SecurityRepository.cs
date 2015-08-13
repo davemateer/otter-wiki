@@ -27,8 +27,10 @@ namespace Otter.Repository
 {
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.DirectoryServices;
     using System.DirectoryServices.AccountManagement;
+    using System.Security.Principal;
     using System.Text.RegularExpressions;
     using Otter.Domain;
 
@@ -37,6 +39,8 @@ namespace Otter.Repository
         // Using ConcurrentDictionary because a new instance is created per request, but we are
         // sharing this dictionary across instances.
         private static readonly ConcurrentDictionary<string, SecurityEntity> LdapCache = new ConcurrentDictionary<string, SecurityEntity>();
+
+        private static readonly string SecurityDomain = ConfigurationManager.AppSettings["otter:SecurityDomain"];
 
         public SecurityEntity Find(string value, SecurityEntityTypes option)
         {
@@ -164,6 +168,27 @@ namespace Otter.Repository
 
                 return null;
             }
+        }
+
+        public IEnumerable<string> GetSecurityGroups(IIdentity identity)
+        {
+            List<string> groups = new List<string>();
+            var windowsIdentity = identity as WindowsIdentity;
+
+            if (windowsIdentity == null)
+            {
+                return null;
+            }
+
+            foreach (var group in windowsIdentity.Groups.Translate(typeof(NTAccount)))
+            {
+                if (group.Value.StartsWith(string.Format("{0}\\", SecurityDomain)))
+                {
+                    groups.Add(this.StandardizeUserId(group.Value));
+                }
+            }
+
+            return groups;
         }
 
         public IEnumerable<SecurityEntity> Search(string query)

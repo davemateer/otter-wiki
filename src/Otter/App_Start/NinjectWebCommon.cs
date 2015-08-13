@@ -74,6 +74,7 @@ namespace Otter
         {
             kernel.Bind<ApplicationDbContext>().ToSelf().InRequestScope();
             kernel.Bind<IArticleRepository>().To<ArticleRepository>().InRequestScope();
+            kernel.Bind<ISearchProvider>().To<LuceneSearchProvider>().InRequestScope();
             kernel.Bind<ISecurityRepository>().To<SecurityRepository>().InRequestScope();
             kernel.Bind<ITextToHtmlConverter>().To<MarkdownConverter>().InRequestScope();
         }

@@ -26,11 +26,14 @@
 namespace Otter.Repository
 {
     using System.Collections.Generic;
+    using System.Security.Principal;
     using Otter.Domain;
 
     public interface ISecurityRepository
     {
         SecurityEntity Find(string value, SecurityEntityTypes option);
+
+        IEnumerable<string> GetSecurityGroups(IIdentity identity);
 
         IEnumerable<SecurityEntity> Search(string query);
 
