@@ -1,5 +1,5 @@
 -- P  up_Article_SelectRevisionTextDeltaSequence
-CREATE PROCEDURE up_Article_SelectRevisionTextDeltaSequence (
+CREATE PROCEDURE [dbo].[up_Article_SelectRevisionTextDeltaSequence] (
 	@ArticleId int,
 	@Revision int
 ) AS
@@ -12,7 +12,8 @@ SELECT @ClosestSnapshotRevision = Revision
 FROM dbo.ArticleHistory
 WHERE 
 	[Text] IS NOT NULL
-	AND Revision < @Revision
+	AND Revision >= @Revision
+	AND ArticleId = @ArticleId
 	
 SELECT a.Revision, a.[Text]
 FROM dbo.Article a
